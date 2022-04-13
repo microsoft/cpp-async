@@ -168,6 +168,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="awaitable_get_tests.cpp" />
+    <ClCompile Include="awaitable_then_tests.cpp" />
     <ClCompile Include="program.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -177,6 +178,7 @@
     <ClInclude Include="awaitable_value_non_member_operator_co_await.h" />
     <ClInclude Include="awaitable_value_resume_spy.h" />
     <ClInclude Include="awaitable_value_throws.h" />
+    <ClInclude Include="awaitable_void.h" />
     <ClInclude Include="awaitable_void_resume_spy.h" />
     <ClInclude Include="awaitable_void_throws.h" />
     <ClInclude Include="callback_thread.h" />

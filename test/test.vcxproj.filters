@@ -21,6 +21,9 @@
     <ClCompile Include="awaitable_get_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="awaitable_then_tests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="awaitable_reference_value.h">
@@ -54,6 +57,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="awaitable_value_non_member_operator_co_await.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="awaitable_void.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
