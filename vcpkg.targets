@@ -1,0 +1,11 @@
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="VcpkgBootstrap" BeforeTargets="ClCompile"
+          Condition="'$(VcpkgEnabled)' == 'true'"
+          Inputs="$(MSBuildThisFileDirectory)vcpkg\scripts\bootstrap.ps1"
+          Outputs="$(_ZVcpkgExecutable)">
+    <Message Text="Bootstrapping vcpkg" Importance="High" />
+    <Exec Command="%22$(_ZVcpkgRoot)bootstrap-vcpkg.bat%22" StandardOutputImportance="High" />
+  </Target>
+
+  <Import Project="$(MSBuildThisFileDirectory)vcpkg\scripts\buildsystems\msbuild\vcpkg.targets" />
+</Project>
