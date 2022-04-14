@@ -128,7 +128,7 @@ TEST_CASE("task<void>.await_suspend() runs continuation when task completes")
     REQUIRE(done.wait_for(std::chrono::seconds{ 1 }));
 }
 
-struct scope_spy
+struct scope_spy final
 {
     constexpr explicit scope_spy(bool& destroyed) noexcept : m_destroyed{ destroyed } {}
 
@@ -139,7 +139,7 @@ private:
 };
 
 template<typename Awaitable>
-task<void> task_void_co_return_co_await_with_scope(bool& scopeDestroyed, Awaitable awaitable)
+inline task<void> task_void_co_return_co_await_with_scope(bool& scopeDestroyed, Awaitable awaitable)
 {
     scope_spy destroyBeforeContinue{ scopeDestroyed };
     co_await awaitable;
@@ -250,7 +250,7 @@ TEST_CASE("task<void>.await_resume() throws when called a second time")
 }
 
 template<typename T>
-task<T> task_value_co_return(T value)
+inline task<T> task_value_co_return(T value)
 {
     co_return value;
 }
@@ -283,7 +283,7 @@ struct never_ready_awaitable_value final
 };
 
 template<typename Awaitable>
-auto task_value_co_return_co_await(Awaitable awaitable) -> task<decltype(awaitable.await_resume())>
+inline auto task_value_co_return_co_await(Awaitable awaitable) -> task<decltype(awaitable.await_resume())>
 {
     co_return co_await awaitable;
 }
@@ -378,7 +378,7 @@ TEST_CASE("task<T>.await_suspend() runs continuation when task completes")
 }
 
 template<typename Awaitable>
-auto task_value_co_return_co_await_with_scope(bool& scopeDestroyed, Awaitable awaitable)
+inline auto task_value_co_return_co_await_with_scope(bool& scopeDestroyed, Awaitable awaitable)
     -> task<decltype(awaitable.await_resume())>
 {
     scope_spy destroyBeforeContinue{ scopeDestroyed };
@@ -632,6 +632,7 @@ TEST_CASE("task<T&>.await_suspend() throws if another continuation is present")
         std::runtime_error,
         Catch::Matchers::Message("task<T> may be co_awaited (or have await_suspend() used) only once."));
 }
+
 TEST_CASE("task<T&>.await_resume() returns co_returned value")
 {
     // Arrange
