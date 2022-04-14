@@ -56,8 +56,11 @@ struct task final
     {
         void* handleAddress{ handle.address() };
 
-        // In certain situations, the compiler knows there is no code to run in the continuation.
-        // Always let treat such empty continuations as "run now" so we preserve nullptr as a sentinel value.
+        // In previous testing, it appeared that a non-empty continuation handle could have a nullptr .address(),
+        // perhaps related to compiler or other optimizations, when it is known that no code acutally needs to be run
+        // when continuing.
+        // Attempts to reproduce that behavior have been unsuccessful, but still handle that situation just in case.
+        // Always treat such empty continuations as "run now" so we preserve nullptr as a sentinel value.
         if (handleAddress == nullptr)
         {
             return false;
