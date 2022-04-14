@@ -204,3 +204,35 @@ int main()
     std::this_thread::sleep_for(std::chrono::seconds{ 1 });
 }
 ```
+
+# task_completion_source<T>
+
+This type controls a task and allows it to be returned and completed separately. Is is designed for producing an
+awaitable type from a function that is not itself a coroutine.
+
+The design of this type is intentionally similar to TaskCompletionSource<TResult> in .NET.
+
+Example usage:
+```c++
+task<int> compute_async(std::thread& callbackThread)
+{
+    std::shared_ptr<task_completion_source<int>> promise{ std::make_shared<task_completion_source<int>>() };
+    // Warning: without the sleep below, the may run and be destroyed before it is assigned to callbackThread.
+    // Capture the task_completion_source shared_ptr by value, or it will get destructed before the callbackThread runs.
+    callbackThread = std::thread{ [promise]()
+        {
+            std::this_thread::sleep_for(std::chrono::seconds{ 1 });
+            promise->set_value(123);
+        }
+    };
+    printf("Returning the task now; will complete it later... ");
+    return promise->task();
+}
+
+int main()
+{
+    std::thread callbackThread{};
+    printf("[completed]\nThe task returned %i\n", awaitable_get(compute_async(callbackThread)));
+    callbackThread.join();
+}
+```

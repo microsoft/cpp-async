@@ -170,6 +170,7 @@
     <ClCompile Include="awaitable_get_tests.cpp" />
     <ClCompile Include="awaitable_then_tests.cpp" />
     <ClCompile Include="program.cpp" />
+    <ClCompile Include="task_completion_source_tests.cpp" />
     <ClCompile Include="task_tests.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -72,7 +72,7 @@ struct awaitable_result final
         m_storageType = result_union_type::value;
     }
 
-    void set_exception(std::exception_ptr exception)
+    void set_exception(std::exception_ptr exception) noexcept
     {
         new (std::addressof(m_storage.exception)) std::exception_ptr{ exception };
         m_storageType = result_union_type::exception;
@@ -128,6 +128,13 @@ struct awaitable_result<void> final
         {
             std::rethrow_exception(m_exception);
         }
+    }
+
+    constexpr void set_value() const noexcept {};
+
+    void set_exception(std::exception_ptr exception) noexcept
+    {
+        m_exception = exception;
     }
 
 private:

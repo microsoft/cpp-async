@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <cassert>
 #include <coroutine>
 #include <exception>
 #include <memory>
@@ -11,26 +12,56 @@
 namespace details
 {
     template<typename T>
+    struct task_promise_type;
+
+    template<typename T>
     struct task_state final
     {
         atomic_acq_rel<void*> stateOrCompletion;
         awaitable_result<T> result;
 
-        void* running_state() const noexcept { return const_cast<task_state*>(this); };
+        constexpr static std::shared_ptr<task_state> create_shared() noexcept
+        {
+            std::shared_ptr<task_state> result{ std::make_shared<task_state>() };
+            result->stateOrCompletion = result->running_state();
+            return std::move(result);
+        }
 
-        void* ready_state() const noexcept { return const_cast<decltype(result)*>(std::addressof(result)); }
+        [[nodiscard]] void* running_state() const noexcept { return const_cast<task_state*>(this); };
 
-        constexpr void* done_state() const noexcept { return nullptr; };
+        [[nodiscard]] void* ready_state() const noexcept
+        {
+            return const_cast<decltype(result)*>(std::addressof(result));
+        }
 
-        bool is_running() const noexcept { return stateOrCompletion == running_state(); }
+        [[nodiscard]] constexpr void* done_state() const noexcept { return nullptr; };
 
-        bool is_ready() const noexcept { return stateOrCompletion == ready_state(); }
+        [[nodiscard]] bool is_running() const noexcept { return stateOrCompletion == running_state(); }
 
-        bool is_done() const noexcept { return stateOrCompletion == done_state(); }
+        [[nodiscard]] bool is_ready() const noexcept { return stateOrCompletion == ready_state(); }
 
-        bool is_completion(void* value)
+        [[nodiscard]] bool is_done() const noexcept { return stateOrCompletion == done_state(); }
+
+        [[nodiscard]] bool is_completion(void* value)
         {
             return value != running_state() && value != ready_state() && value != done_state();
+        }
+
+        [[nodiscard]] std::coroutine_handle<> mark_ready() noexcept
+        {
+            // mark_ready() must not be called if the task state has already moved to "done".
+            assert(!is_done());
+
+            void* previousStateOrCompletion{ stateOrCompletion.exchange(ready_state()) };
+
+            if (is_completion(previousStateOrCompletion))
+            {
+                return std::coroutine_handle<task_promise_type<T>>::from_address(previousStateOrCompletion);
+            }
+            else
+            {
+                return std::coroutine_handle<>{};
+            }
         }
     };
 
@@ -121,11 +152,11 @@ namespace details
 
             if (state)
             {
-                void* stateOrCompletion{ state->stateOrCompletion.exchange(state->ready_state()) };
+                std::coroutine_handle<> possibleCompletion{ state->mark_ready() };
 
-                if (state->is_completion(stateOrCompletion))
+                if (possibleCompletion)
                 {
-                    return std::coroutine_handle<task_promise_type<T>>::from_address(stateOrCompletion);
+                    return possibleCompletion;
                 }
             }
 
@@ -143,8 +174,7 @@ namespace details
     {
         constexpr task<T> get_return_object() noexcept
         {
-            std::shared_ptr<task_state<T>> state{ std::make_shared<task_state<T>>() };
-            state->stateOrCompletion = state->running_state();
+            std::shared_ptr<task_state<T>> state{ task_state<T>::create_shared() };
             m_state = std::weak_ptr{ state };
             return task<T>{ std::move(state) };
         }
@@ -185,8 +215,7 @@ namespace details
     {
         task<void> get_return_object() noexcept
         {
-            std::shared_ptr<task_state<void>> state{ std::make_shared<task_state<void>>() };
-            state->stateOrCompletion = state->running_state();
+            std::shared_ptr<task_state<void>> state{ task_state<void>::create_shared() };
             m_state = std::weak_ptr{ state };
             return task<void>{ std::move(state) };
         }
