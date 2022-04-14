@@ -106,6 +106,36 @@ private:
 namespace details
 {
     template<typename T>
+    struct symmetric_transfer final
+    {
+        constexpr explicit symmetric_transfer(std::weak_ptr<task_state<T>>&& state) : m_state{ std::move(state) } {}
+
+        [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
+
+        constexpr std::coroutine_handle<> await_suspend(std::coroutine_handle<>) const noexcept
+        {
+            std::shared_ptr<task_state<T>> state{ m_state.lock() };
+
+            if (state)
+            {
+                void* stateOrCompletion{ state->stateOrCompletion.exchange(state->ready_state()) };
+
+                if (state->is_completion(stateOrCompletion))
+                {
+                    return std::coroutine_handle<task_promise_type<T>>::from_address(stateOrCompletion);
+                }
+            }
+
+            return std::noop_coroutine();
+        }
+
+        constexpr void await_resume() const noexcept {}
+
+    private:
+        std::weak_ptr<task_state<T>> m_state;
+    };
+
+    template<typename T>
     struct task_promise_type final
     {
         constexpr task<T> get_return_object() noexcept
@@ -118,21 +148,9 @@ namespace details
 
         constexpr std::suspend_never initial_suspend() const noexcept { return {}; }
 
-        constexpr std::suspend_never final_suspend() const noexcept
+        symmetric_transfer<T> final_suspend() const noexcept
         {
-            std::shared_ptr<task_state<T>> state{ m_state.lock() };
-
-            if (state)
-            {
-                void* stateOrCompletion{ state->stateOrCompletion.exchange(state->ready_state()) };
-
-                if (state->is_completion(stateOrCompletion))
-                {
-                    std::coroutine_handle<task_promise_type>::from_address(stateOrCompletion)();
-                }
-            }
-
-            return {};
+            return symmetric_transfer<T>{ std::weak_ptr<task_state<T>>{ std::move(m_state) } };
         }
 
         constexpr void unhandled_exception() const noexcept
@@ -172,21 +190,9 @@ namespace details
 
         constexpr std::suspend_never initial_suspend() const noexcept { return {}; }
 
-        std::suspend_never final_suspend() const noexcept
+        symmetric_transfer<void> final_suspend() const noexcept
         {
-            std::shared_ptr<task_state<void>> state{ m_state.lock() };
-
-            if (state)
-            {
-                void* stateOrCompletion{ state->stateOrCompletion.exchange(state->ready_state()) };
-
-                if (state->is_completion(stateOrCompletion))
-                {
-                    std::coroutine_handle<task_promise_type>::from_address(stateOrCompletion)();
-                }
-            }
-
-            return {};
+            return symmetric_transfer<void>{ std::weak_ptr<task_state<void>>{ std::move(m_state) } };
         }
 
         void unhandled_exception() const noexcept
