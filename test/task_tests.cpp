@@ -58,64 +58,14 @@ TEST_CASE("task<void>.await_ready() returns false when task suspends")
     REQUIRE(!ready);
 }
 
-struct std_coroutine_handle_deleter final
-{
-    void operator()(std::coroutine_handle<>* value)
-    {
-        if (value != nullptr)
-        {
-            value->destroy();
-        }
-    }
-};
-
-using unique_ptr_coroutine_handle = std::unique_ptr<std::coroutine_handle<>, std_coroutine_handle_deleter>;
-
-inline unique_ptr_coroutine_handle create_noop_coroutine_handle() noexcept
-{
-    struct capture_task final
-    {
-        struct promise_type final
-        {
-            capture_task get_return_object()
-            {
-                std::coroutine_handle<> handle{ std::coroutine_handle<promise_type>::from_promise(*this) };
-                unique_ptr_coroutine_handle handleOwner{ new std::coroutine_handle<>{ handle },
-                                                         std_coroutine_handle_deleter{} };
-                return capture_task{ std::move(handleOwner) };
-            }
-
-            std::suspend_never initial_suspend() { return {}; }
-            void unhandled_exception() const { std::rethrow_exception(std::current_exception()); }
-            constexpr void return_void() const noexcept {}
-            std::suspend_always final_suspend() noexcept { return {}; }
-        };
-
-        static capture_task create()
-        {
-            co_await never_ready_awaitable_void{};
-            co_return;
-        }
-
-        unique_ptr_coroutine_handle handle() noexcept { return std::move(m_handle); }
-
-    private:
-        explicit capture_task(unique_ptr_coroutine_handle&& handle) : m_handle{ std::move(handle) } {}
-
-        unique_ptr_coroutine_handle m_handle;
-    };
-
-    return capture_task::create().handle();
-}
-
 TEST_CASE("task<void>.await_suspend() returns true when task is suspended")
 {
     // Arrange
     task<void> task{ task_void_co_await(never_ready_awaitable_void{}) };
-    unique_ptr_coroutine_handle handle{ create_noop_coroutine_handle() };
+    std::noop_coroutine_handle handle{ std::noop_coroutine() };
 
     // Act
-    bool suspended{ task.await_suspend(*handle) };
+    bool suspended{ task.await_suspend(handle) };
 
     // Assert
     REQUIRE(suspended);
@@ -125,10 +75,10 @@ TEST_CASE("task<void>.await_suspend() returns false when task is not suspended")
 {
     // Arrange
     task<void> task{ task_void_co_return() };
-    unique_ptr_coroutine_handle handle{ create_noop_coroutine_handle() };
+    std::noop_coroutine_handle handle{ std::noop_coroutine() };
 
     // Act
-    bool suspended{ task.await_suspend(*handle) };
+    bool suspended{ task.await_suspend(handle) };
 
     // Assert
     REQUIRE(!suspended);
@@ -223,23 +173,23 @@ TEST_CASE("task<void>.await_suspend() throws if another continuation is present"
 {
     // Arrange
     task<void> task{ task_void_co_await(never_ready_awaitable_void{}) };
-    unique_ptr_coroutine_handle firstHandle{ create_noop_coroutine_handle() };
+    std::noop_coroutine_handle firstHandle{ std::noop_coroutine() };
 
     if (task.await_ready())
     {
         throw std::runtime_error{ "Precondition failed." };
     }
 
-    if (!task.await_suspend(*firstHandle))
+    if (!task.await_suspend(firstHandle))
     {
         throw std::runtime_error{ "Precondition failed." };
     }
 
-    unique_ptr_coroutine_handle handle{ create_noop_coroutine_handle() };
+    std::noop_coroutine_handle handle{ std::noop_coroutine() };
 
     // Act & Assert
     REQUIRE_THROWS_MATCHES(
-        task.await_suspend(*handle),
+        task.await_suspend(handle),
         std::runtime_error,
         Catch::Matchers::Message("task<T> may be co_awaited (or have await_suspend() used) only once."));
 }
@@ -354,10 +304,10 @@ TEST_CASE("task<T>.await_suspend() returns true when task is suspended")
 {
     // Arrange
     task<int> task{ task_value_co_return_co_await(never_ready_awaitable_value<int>{}) };
-    unique_ptr_coroutine_handle handle{ create_noop_coroutine_handle() };
+    std::noop_coroutine_handle handle{ std::noop_coroutine() };
 
     // Act
-    bool suspended{ task.await_suspend(*handle) };
+    bool suspended{ task.await_suspend(handle) };
 
     // Assert
     REQUIRE(suspended);
@@ -368,10 +318,10 @@ TEST_CASE("task<T>.await_suspend() returns false when task is not suspended")
     // Arrange
     constexpr int unusedValue{ 123 };
     task<int> task{ task_value_co_return(unusedValue) };
-    unique_ptr_coroutine_handle handle{ create_noop_coroutine_handle() };
+    std::noop_coroutine_handle handle{ std::noop_coroutine() };
 
     // Act
-    bool suspended{ task.await_suspend(*handle) };
+    bool suspended{ task.await_suspend(handle) };
 
     // Assert
     REQUIRE(!suspended);
@@ -463,23 +413,23 @@ TEST_CASE("task<T>.await_suspend() throws if another continuation is present")
 {
     // Arrange
     task<int> task{ task_value_co_return_co_await(never_ready_awaitable_value<int>{}) };
-    unique_ptr_coroutine_handle firstHandle{ create_noop_coroutine_handle() };
+    std::noop_coroutine_handle firstHandle{ std::noop_coroutine() };
 
     if (task.await_ready())
     {
         throw std::runtime_error{ "Precondition failed." };
     }
 
-    if (!task.await_suspend(*firstHandle))
+    if (!task.await_suspend(firstHandle))
     {
         throw std::runtime_error{ "Precondition failed." };
     }
 
-    unique_ptr_coroutine_handle handle{ create_noop_coroutine_handle() };
+    std::noop_coroutine_handle handle{ std::noop_coroutine() };
 
     // Act & Assert
     REQUIRE_THROWS_MATCHES(
-        task.await_suspend(*handle),
+        task.await_suspend(handle),
         std::runtime_error,
         Catch::Matchers::Message("task<T> may be co_awaited (or have await_suspend() used) only once."));
 }
@@ -576,10 +526,10 @@ TEST_CASE("task<T&>.await_suspend() returns true when task is suspended")
 {
     // Arrange
     task<int&> task{ task_value_co_return_co_await(never_ready_awaitable_value<int&>{}) };
-    unique_ptr_coroutine_handle handle{ create_noop_coroutine_handle() };
+    std::noop_coroutine_handle handle{ std::noop_coroutine() };
 
     // Act
-    bool suspended{ task.await_suspend(*handle) };
+    bool suspended{ task.await_suspend(handle) };
 
     // Assert
     REQUIRE(suspended);
@@ -591,10 +541,10 @@ TEST_CASE("task<T&>.await_suspend() returns false when task is not suspended")
     int unusedStorage{ 123 };
     int& unusedValue{ unusedStorage };
     task<int&> task{ task_value_co_return<int&>(unusedValue) };
-    unique_ptr_coroutine_handle handle{ create_noop_coroutine_handle() };
+    std::noop_coroutine_handle handle{ std::noop_coroutine() };
 
     // Act
-    bool suspended{ task.await_suspend(*handle) };
+    bool suspended{ task.await_suspend(handle) };
 
     // Assert
     REQUIRE(!suspended);
@@ -662,23 +612,23 @@ TEST_CASE("task<T&>.await_suspend() throws if another continuation is present")
 {
     // Arrange
     task<int&> task{ task_value_co_return_co_await(never_ready_awaitable_value<int&>{}) };
-    unique_ptr_coroutine_handle firstHandle{ create_noop_coroutine_handle() };
+    std::noop_coroutine_handle firstHandle{ std::noop_coroutine() };
 
     if (task.await_ready())
     {
         throw std::runtime_error{ "Precondition failed." };
     }
 
-    if (!task.await_suspend(*firstHandle))
+    if (!task.await_suspend(firstHandle))
     {
         throw std::runtime_error{ "Precondition failed." };
     }
 
-    unique_ptr_coroutine_handle handle{ create_noop_coroutine_handle() };
+    std::noop_coroutine_handle handle{ std::noop_coroutine() };
 
     // Act & Assert
     REQUIRE_THROWS_MATCHES(
-        task.await_suspend(*handle),
+        task.await_suspend(handle),
         std::runtime_error,
         Catch::Matchers::Message("task<T> may be co_awaited (or have await_suspend() used) only once."));
 }
