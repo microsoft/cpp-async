@@ -20,5 +20,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)awaitable_resume_t.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)awaitable_then.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)event_signal.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)task.h" />
   </ItemGroup>
 </Project>

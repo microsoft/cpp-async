@@ -92,3 +92,115 @@ int main()
     printf("%s\n", read_file_future().get().c_str());
 }
 ```
+
+# task<T>
+
+This type is a coroutine return type; it allows writing a function as a coroutine (calling co_await/co_return).
+
+task<T> supports the following return types:
+* T is void
+* T is a move-only type
+* T is a type that does not have a default constructor
+* T is a reference type
+
+A caller may only co_await a task<T> once, and the result of the task is moved out when returning from co_await.
+
+When working with the task<T> directly (rather than only passing it directly to co_await), a caller may cancel execution
+of any code that would resume after the task completes by destructing the task. (Destructing the task does not stop the
+task's coroutine from running, just any continuation that would run after the task's coroutine completes.) As a result,
+an exception thrown from a task will be ignored if no caller consumers the task's result. (A caller can avoid this
+behavior by consuming the task's result and handling the exception differently; for example by co_awaiting the task from
+another coroutine and calling std::terminate when it throws.)
+
+Internally, task<T> destroys the coroutine frame as soon as the coroutine completes; it does not wait until the task has
+destructed (which would only be after executing any code that will run next). Both options here involve tradeoffs; the
+alternative would avoid the need for an internal heap allocation when creating the task at the expense of keeping
+(potentially large) coroutine frame memory in use longer.
+
+Example usage:
+```c++
+inline task<void> do_async()
+{
+    /* do some work */
+    co_await /* some awaitable object */;
+    /* do some more work */
+    co_return;
+}
+```
+
+```c++
+inline task<std::string> read_async()
+{
+    co_await /* some awaitable object */;
+    co_return std::string{ "contents" };
+}
+```
+
+```c++
+inline task<std::unique_ptr<std::string>> return_move_only_async()
+{
+    co_return std::make_unique<std::string>("contents");
+}
+
+inline task<void> use_move_only_async()
+{
+    std::unique_ptr<std::string> text{ co_await return_move_only_async() };
+    printf("%s\n", text->c_str());
+}
+```
+
+```c++
+inline task<int&> return_reference_type_async(int& a, int& b)
+{
+    int& larger{ a > b ? a : b };
+    co_return larger;
+}
+
+inline task<void> use_reference_type_async()
+{
+    int first{ 3 };
+    int second{ 6 };
+    const int& larger{ co_await return_reference_type_async(first, second) };
+    ++second;
+    printf("%i\n", larger); // 7
+}
+```
+
+```c++
+inline task<void> fire_and_forget()
+{
+    /* do some work */
+
+    co_await /* some awaitable object */;
+
+    if (/* something bad happens*/)
+    {
+        throw std::runtime_error{ "fire_and_forget failed" };
+    }
+
+    co_return;
+}
+
+inline task<void> fire_and_forget_except_crash_on_failure()
+{
+    try
+    {
+        co_await fire_and_forget();
+    }
+    catch (...)
+    {
+        std::terminate();
+    }
+}
+
+int main()
+{
+    {
+        // uncomment one of the next lines (to ignore or crash on exception):
+        //fire_and_forget();
+        fire_and_forget_except_crash_on_failure();
+    }
+
+    std::this_thread::sleep_for(std::chrono::seconds{ 1 });
+}
+```

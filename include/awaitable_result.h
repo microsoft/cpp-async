@@ -109,6 +109,8 @@ private:
 template<>
 struct awaitable_result<void> final
 {
+    awaitable_result() noexcept : m_exception{} {}
+
     explicit awaitable_result(std::exception_ptr exception) noexcept : m_exception{ exception } {}
 
     awaitable_result(const awaitable_result&) = delete;
