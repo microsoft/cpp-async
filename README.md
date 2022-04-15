@@ -236,3 +236,32 @@ int main()
     callbackThread.join();
 }
 ```
+
+# to_future()
+
+This function produces a std::future<T> for an awaitable; it downgrades a C++ 20 awaitable/coroutine to a C++ 11
+std::future<T> (for use with legacy code).
+
+This function works with any awaitable type whose return value type can be used with std::promise<T>. Note that types
+without default constructors are not supported for std::promise<T>
+
+Example usage:
+```c++
+inline /*<some_awaitable_type>*/ read_file_async()
+{
+    co_await /* some awaitable object */;
+    co_return std::string{ "file contents" };
+}
+
+// Convert to legacy C++ 11 async; for example, if needed to defer refactoring the caller.
+inline std::future<std::string> read_file_future()
+{
+    return to_future(read_file_async());
+}
+
+int main()
+{
+    std::string text{ read_file_future().get() };
+    printf("%s\n", text.c_str());
+}
+```

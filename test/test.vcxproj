@@ -172,6 +172,7 @@
     <ClCompile Include="program.cpp" />
     <ClCompile Include="task_completion_source_tests.cpp" />
     <ClCompile Include="task_tests.cpp" />
+    <ClCompile Include="to_future_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="awaitable_reference_value.h" />
