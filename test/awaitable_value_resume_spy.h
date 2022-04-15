@@ -14,11 +14,11 @@ struct awaitable_value_resume_spy final
         m_thread{ thread }, m_waited{ waited }, m_value{ std::forward<T>(value) }
     {}
 
-    constexpr bool await_ready() const noexcept { return false; }
+    [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
 
     void await_suspend(std::coroutine_handle<> handle) { m_thread.enqueue(handle); }
 
-    T await_resume() noexcept
+    [[nodiscard]] T await_resume() noexcept
     {
         if (m_thread.is_this_thread())
         {

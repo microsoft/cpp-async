@@ -366,7 +366,7 @@ inline task<void> co_await_value_finally_set_signal(task<T>&& awaitable, event_s
 {
     try
     {
-        co_await std::move(awaitable);
+        (void)(co_await std::move(awaitable));
     }
     catch (...)
     {

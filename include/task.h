@@ -76,14 +76,14 @@ struct task final
 
     using promise_type = details::task_promise_type<T>;
 
-    constexpr bool await_ready() const noexcept
+    [[nodiscard]] constexpr bool await_ready() const noexcept
     {
         void* currentStateOrCompletion{ m_state->stateOrCompletion };
 
         return currentStateOrCompletion == m_state->ready_state() || currentStateOrCompletion == m_state->done_state();
     }
 
-    constexpr bool await_suspend(std::coroutine_handle<> handle) const
+    [[nodiscard]] constexpr bool await_suspend(std::coroutine_handle<> handle) const
     {
         void* handleAddress{ handle.address() };
 
@@ -112,7 +112,7 @@ struct task final
         return true;
     }
 
-    constexpr T await_resume() const
+    [[nodiscard]] constexpr T await_resume() const
     {
         void* currentStateOrCompletion{ m_state->ready_state() };
 

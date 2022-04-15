@@ -13,7 +13,7 @@ struct awaitable_void_resume_spy final
         m_thread{ thread }, m_waited{ waited }
     {}
 
-    constexpr bool await_ready() const noexcept { return false; }
+    [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
 
     void await_suspend(std::coroutine_handle<> handle) { m_thread.enqueue(handle); }
 

@@ -10,9 +10,9 @@ struct awaitable_void_throws final
 {
     explicit awaitable_void_throws(std::exception_ptr exception) noexcept : m_exception{ exception } {}
 
-    constexpr bool await_ready() const noexcept { return true; }
+    [[nodiscard]] constexpr bool await_ready() const noexcept { return true; }
 
-    constexpr bool await_suspend(std::coroutine_handle<>) const noexcept
+    [[nodiscard]] constexpr bool await_suspend(std::coroutine_handle<>) const noexcept
     {
         assert(false);
         return false;

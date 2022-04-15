@@ -29,7 +29,7 @@ TEST_CASE("task<void>.await_ready() returns true when task does not suspend")
 
 struct never_ready_awaitable_void final
 {
-    constexpr bool await_ready() const noexcept { return false; }
+    [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
 
     constexpr void await_suspend(std::coroutine_handle<>) const noexcept {}
 
@@ -102,7 +102,7 @@ struct suspend_to_paused_callback_thread_awaitable_void final
 {
     explicit suspend_to_paused_callback_thread_awaitable_void(callback_thread& thread) noexcept : m_thread{ thread } {}
 
-    constexpr bool await_ready() const noexcept { return false; }
+    [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
 
     void await_suspend(std::coroutine_handle<> handle) const noexcept { m_thread.callback(handle); }
 
@@ -271,11 +271,11 @@ TEST_CASE("task<T>.await_ready() returns true when task does not suspend")
 template<typename T>
 struct never_ready_awaitable_value final
 {
-    constexpr bool await_ready() const noexcept { return false; }
+    [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
 
     constexpr void await_suspend(std::coroutine_handle<>) const noexcept {}
 
-    T await_resume() const
+    [[nodiscard]] T await_resume() const
     {
         assert(false);
         throw std::runtime_error{ "This awaitable never resumes." };
@@ -348,11 +348,11 @@ struct suspend_to_paused_callback_thread_awaitable_value final
         m_thread{ thread }, m_value{ value }
     {}
 
-    constexpr bool await_ready() const noexcept { return false; }
+    [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
 
     void await_suspend(std::coroutine_handle<> handle) const noexcept { m_thread.callback(handle); }
 
-    constexpr T await_resume() const noexcept { return m_value; }
+    [[nodiscard]] constexpr T await_resume() const noexcept { return m_value; }
 
 private:
     callback_thread& m_thread;
