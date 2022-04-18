@@ -13,12 +13,12 @@
 #include "event_signal.h"
 #include "no_default_constructor_move_only.h"
 
-inline task<void> task_void_co_return() { co_return; }
+inline async::task<void> task_void_co_return() { co_return; }
 
 TEST_CASE("task<void>.await_ready() returns true when task does not suspend")
 {
     // Arrange
-    task<void> task{ task_void_co_return() };
+    async::task<void> task{ task_void_co_return() };
 
     // Act
     bool ready{ task.await_ready() };
@@ -41,7 +41,7 @@ struct never_ready_awaitable_void final
 };
 
 template<typename Awaitable>
-inline task<void> task_void_co_await(Awaitable awaitable)
+inline async::task<void> task_void_co_await(Awaitable awaitable)
 {
     co_await awaitable;
 }
@@ -49,7 +49,7 @@ inline task<void> task_void_co_await(Awaitable awaitable)
 TEST_CASE("task<void>.await_ready() returns false when task suspends")
 {
     // Arrange
-    task<void> task{ task_void_co_await(never_ready_awaitable_void{}) };
+    async::task<void> task{ task_void_co_await(never_ready_awaitable_void{}) };
 
     // Act
     bool ready{ task.await_ready() };
@@ -61,7 +61,7 @@ TEST_CASE("task<void>.await_ready() returns false when task suspends")
 TEST_CASE("task<void>.await_suspend() returns true when task is suspended")
 {
     // Arrange
-    task<void> task{ task_void_co_await(never_ready_awaitable_void{}) };
+    async::task<void> task{ task_void_co_await(never_ready_awaitable_void{}) };
     std::noop_coroutine_handle handle{ std::noop_coroutine() };
 
     // Act
@@ -74,7 +74,7 @@ TEST_CASE("task<void>.await_suspend() returns true when task is suspended")
 TEST_CASE("task<void>.await_suspend() returns false when task is not suspended")
 {
     // Arrange
-    task<void> task{ task_void_co_return() };
+    async::task<void> task{ task_void_co_return() };
     std::noop_coroutine_handle handle{ std::noop_coroutine() };
 
     // Act
@@ -87,9 +87,9 @@ TEST_CASE("task<void>.await_suspend() returns false when task is not suspended")
 TEST_CASE("task<void>.await_suspend() does not run continuation when task is suspended")
 {
     // Arrange
-    task<void> task{ task_void_co_await(never_ready_awaitable_void{}) };
-    atomic_acq_rel<bool> run{ false };
-    auto continuation = [&run](awaitable_result<void>) { run = true; };
+    async::task<void> task{ task_void_co_await(never_ready_awaitable_void{}) };
+    async::details::atomic_acq_rel<bool> run{ false };
+    auto continuation = [&run](async::awaitable_result<void>) { run = true; };
 
     // Act
     awaitable_then(task, continuation);
@@ -116,9 +116,9 @@ TEST_CASE("task<void>.await_suspend() runs continuation when task completes")
 {
     // Arrange
     callback_thread callbackThread{};
-    task<void> task{ task_void_co_await(suspend_to_paused_callback_thread_awaitable_void{ callbackThread }) };
-    event_signal done{};
-    auto continuation = [&done](awaitable_result<void>) { done.set(); };
+    async::task<void> task{ task_void_co_await(suspend_to_paused_callback_thread_awaitable_void{ callbackThread }) };
+    async::event_signal done{};
+    auto continuation = [&done](async::awaitable_result<void>) { done.set(); };
     awaitable_then(task, continuation);
 
     // Act
@@ -139,7 +139,7 @@ private:
 };
 
 template<typename Awaitable>
-inline task<void> task_void_co_return_co_await_with_scope(bool& scopeDestroyed, Awaitable awaitable)
+inline async::task<void> task_void_co_return_co_await_with_scope(bool& scopeDestroyed, Awaitable awaitable)
 {
     scope_spy destroyBeforeContinue{ scopeDestroyed };
     co_await awaitable;
@@ -152,10 +152,10 @@ TEST_CASE("task<void>.await_suspend() does not run continuation before leaving c
     bool scopeDestroyed{ false };
     bool scopeDestroyedDuringCompletion{};
     callback_thread callbackThread{};
-    task<void> task{ task_void_co_return_co_await_with_scope(
+    async::task<void> task{ task_void_co_return_co_await_with_scope(
         scopeDestroyed, suspend_to_paused_callback_thread_awaitable_void{ callbackThread }) };
-    event_signal done{};
-    auto continuation = [&scopeDestroyed, &scopeDestroyedDuringCompletion, &done](awaitable_result<void>) {
+    async::event_signal done{};
+    auto continuation = [&scopeDestroyed, &scopeDestroyedDuringCompletion, &done](async::awaitable_result<void>) {
         scopeDestroyedDuringCompletion = scopeDestroyed;
         done.set();
     };
@@ -172,7 +172,7 @@ TEST_CASE("task<void>.await_suspend() does not run continuation before leaving c
 TEST_CASE("task<void>.await_suspend() throws if another continuation is present")
 {
     // Arrange
-    task<void> task{ task_void_co_await(never_ready_awaitable_void{}) };
+    async::task<void> task{ task_void_co_await(never_ready_awaitable_void{}) };
     std::noop_coroutine_handle firstHandle{ std::noop_coroutine() };
 
     if (task.await_ready())
@@ -197,7 +197,7 @@ TEST_CASE("task<void>.await_suspend() throws if another continuation is present"
 TEST_CASE("task<void>.await_resume() does not throw when task does not throw")
 {
     // Arrange
-    task<void> task{ task_void_co_return() };
+    async::task<void> task{ task_void_co_return() };
 
     // Act & Assert
     REQUIRE_NOTHROW(task.await_resume());
@@ -207,7 +207,7 @@ TEST_CASE("task<void>.await_resume() throws when task throws")
 {
     // Arrange
     std::runtime_error expected{ "expected" };
-    task<void> task{ task_void_co_await(awaitable_void_throws{ std::make_exception_ptr(expected) }) };
+    async::task<void> task{ task_void_co_await(awaitable_void_throws{ std::make_exception_ptr(expected) }) };
 
     // Act & Assert
     REQUIRE_THROWS_MATCHES(task.await_resume(), std::runtime_error, Catch::Matchers::Message(expected.what()));
@@ -216,7 +216,7 @@ TEST_CASE("task<void>.await_resume() throws when task throws")
 TEST_CASE("task<void>.await_resume() throws when called before completion")
 {
     // Arrange
-    task<void> task{ task_void_co_await(never_ready_awaitable_void{}) };
+    async::task<void> task{ task_void_co_await(never_ready_awaitable_void{}) };
 
     if (task.await_ready())
     {
@@ -233,7 +233,7 @@ TEST_CASE("task<void>.await_resume() throws when called before completion")
 TEST_CASE("task<void>.await_resume() throws when called a second time")
 {
     // Arrange
-    task<void> task{ task_void_co_return() };
+    async::task<void> task{ task_void_co_return() };
 
     if (!task.await_ready())
     {
@@ -250,7 +250,7 @@ TEST_CASE("task<void>.await_resume() throws when called a second time")
 }
 
 template<typename T>
-inline task<T> task_value_co_return(T value)
+inline async::task<T> task_value_co_return(T value)
 {
     co_return value;
 }
@@ -259,7 +259,7 @@ TEST_CASE("task<T>.await_ready() returns true when task does not suspend")
 {
     // Arrange
     constexpr int unusedValue{ 123 };
-    task<int> task{ task_value_co_return(unusedValue) };
+    async::task<int> task{ task_value_co_return(unusedValue) };
 
     // Act
     bool ready{ task.await_ready() };
@@ -283,7 +283,7 @@ struct never_ready_awaitable_value final
 };
 
 template<typename Awaitable>
-inline auto task_value_co_return_co_await(Awaitable awaitable) -> task<decltype(awaitable.await_resume())>
+inline auto task_value_co_return_co_await(Awaitable awaitable) -> async::task<decltype(awaitable.await_resume())>
 {
     co_return co_await awaitable;
 }
@@ -291,7 +291,7 @@ inline auto task_value_co_return_co_await(Awaitable awaitable) -> task<decltype(
 TEST_CASE("task<T>.await_ready() returns false when task suspends")
 {
     // Arrange
-    task<int> task{ task_value_co_return_co_await(never_ready_awaitable_value<int>{}) };
+    async::task<int> task{ task_value_co_return_co_await(never_ready_awaitable_value<int>{}) };
 
     // Act
     bool ready{ task.await_ready() };
@@ -303,7 +303,7 @@ TEST_CASE("task<T>.await_ready() returns false when task suspends")
 TEST_CASE("task<T>.await_suspend() returns true when task is suspended")
 {
     // Arrange
-    task<int> task{ task_value_co_return_co_await(never_ready_awaitable_value<int>{}) };
+    async::task<int> task{ task_value_co_return_co_await(never_ready_awaitable_value<int>{}) };
     std::noop_coroutine_handle handle{ std::noop_coroutine() };
 
     // Act
@@ -317,7 +317,7 @@ TEST_CASE("task<T>.await_suspend() returns false when task is not suspended")
 {
     // Arrange
     constexpr int unusedValue{ 123 };
-    task<int> task{ task_value_co_return(unusedValue) };
+    async::task<int> task{ task_value_co_return(unusedValue) };
     std::noop_coroutine_handle handle{ std::noop_coroutine() };
 
     // Act
@@ -330,9 +330,9 @@ TEST_CASE("task<T>.await_suspend() returns false when task is not suspended")
 TEST_CASE("task<T>.await_suspend() does not run continuation when task is suspended")
 {
     // Arrange
-    task<int> task{ task_value_co_return_co_await(never_ready_awaitable_value<int>{}) };
-    atomic_acq_rel<bool> run{ false };
-    auto continuation = [&run](awaitable_result<int>) { run = true; };
+    async::task<int> task{ task_value_co_return_co_await(never_ready_awaitable_value<int>{}) };
+    async::details::atomic_acq_rel<bool> run{ false };
+    auto continuation = [&run](async::awaitable_result<int>) { run = true; };
 
     // Act
     awaitable_then(task, continuation);
@@ -364,10 +364,10 @@ TEST_CASE("task<T>.await_suspend() runs continuation when task completes")
     // Arrange
     callback_thread callbackThread{};
     constexpr int unusedValue{ 123 };
-    task<int> task{ task_value_co_return_co_await(
+    async::task<int> task{ task_value_co_return_co_await(
         suspend_to_paused_callback_thread_awaitable_value{ callbackThread, unusedValue }) };
-    event_signal done{};
-    auto continuation = [&done](awaitable_result<int>) { done.set(); };
+    async::event_signal done{};
+    auto continuation = [&done](async::awaitable_result<int>) { done.set(); };
     awaitable_then(task, continuation);
 
     // Act
@@ -379,7 +379,7 @@ TEST_CASE("task<T>.await_suspend() runs continuation when task completes")
 
 template<typename Awaitable>
 inline auto task_value_co_return_co_await_with_scope(bool& scopeDestroyed, Awaitable awaitable)
-    -> task<decltype(awaitable.await_resume())>
+    -> async::task<decltype(awaitable.await_resume())>
 {
     scope_spy destroyBeforeContinue{ scopeDestroyed };
     co_return co_await awaitable;
@@ -392,10 +392,10 @@ TEST_CASE("task<T>.await_suspend() does not run continuation before leaving coro
     bool scopeDestroyedDuringCompletion{};
     callback_thread callbackThread{};
     constexpr int unusedValue{ 123 };
-    task<int> task{ task_value_co_return_co_await_with_scope(
+    async::task<int> task{ task_value_co_return_co_await_with_scope(
         scopeDestroyed, suspend_to_paused_callback_thread_awaitable_value{ callbackThread, unusedValue }) };
-    event_signal done{};
-    auto continuation = [&scopeDestroyed, &scopeDestroyedDuringCompletion, &done](awaitable_result<int>) {
+    async::event_signal done{};
+    auto continuation = [&scopeDestroyed, &scopeDestroyedDuringCompletion, &done](async::awaitable_result<int>) {
         scopeDestroyedDuringCompletion = scopeDestroyed;
         done.set();
     };
@@ -412,7 +412,7 @@ TEST_CASE("task<T>.await_suspend() does not run continuation before leaving coro
 TEST_CASE("task<T>.await_suspend() throws if another continuation is present")
 {
     // Arrange
-    task<int> task{ task_value_co_return_co_await(never_ready_awaitable_value<int>{}) };
+    async::task<int> task{ task_value_co_return_co_await(never_ready_awaitable_value<int>{}) };
     std::noop_coroutine_handle firstHandle{ std::noop_coroutine() };
 
     if (task.await_ready())
@@ -439,7 +439,7 @@ TEST_CASE("task<T>.await_resume() returns co_returned value")
     // Arrange
     constexpr std::string_view expected{ "expected" };
     std::unique_ptr<std::string_view> value{ std::make_unique<std::string_view>(expected) };
-    task<std::unique_ptr<std::string_view>> task{ task_value_co_return(std::move(value)) };
+    async::task<std::unique_ptr<std::string_view>> task{ task_value_co_return(std::move(value)) };
 
     // Act & Assert
     std::unique_ptr<std::string_view> actual{ task.await_resume() };
@@ -450,7 +450,8 @@ TEST_CASE("task<T>.await_resume() throws when coroutine throws")
 {
     // Arrange
     std::runtime_error expected{ "expected" };
-    task<int> task{ task_value_co_return_co_await(awaitable_value_throws<int>{ std::make_exception_ptr(expected) }) };
+    async::task<int> task{ task_value_co_return_co_await(
+        awaitable_value_throws<int>{ std::make_exception_ptr(expected) }) };
 
     // Act & Assert
     REQUIRE_THROWS_MATCHES(task.await_resume(), std::runtime_error, Catch::Matchers::Message(expected.what()));
@@ -459,7 +460,7 @@ TEST_CASE("task<T>.await_resume() throws when coroutine throws")
 TEST_CASE("task<T>.await_resume() throws when called before completion")
 {
     // Arrange
-    task<int> task{ task_value_co_return_co_await(never_ready_awaitable_value<int>{}) };
+    async::task<int> task{ task_value_co_return_co_await(never_ready_awaitable_value<int>{}) };
 
     if (task.await_ready())
     {
@@ -477,7 +478,7 @@ TEST_CASE("task<T>.await_resume() throws when called a second time")
 {
     // Arrange
     constexpr int value{ 123 };
-    task<int> task{ task_value_co_return(value) };
+    async::task<int> task{ task_value_co_return(value) };
 
     if (!task.await_ready())
     {
@@ -501,7 +502,7 @@ TEST_CASE("task<T&>.await_ready() returns true when task does not suspend")
     // Arrange
     int unusedStorage{ 123 };
     int& unusedValue{ unusedStorage };
-    task<int&> task{ task_value_co_return<int&>(unusedValue) };
+    async::task<int&> task{ task_value_co_return<int&>(unusedValue) };
 
     // Act
     bool ready{ task.await_ready() };
@@ -513,7 +514,7 @@ TEST_CASE("task<T&>.await_ready() returns true when task does not suspend")
 TEST_CASE("task<T&>.await_ready() returns false when task suspends")
 {
     // Arrange
-    task<int&> task{ task_value_co_return_co_await(never_ready_awaitable_value<int&>{}) };
+    async::task<int&> task{ task_value_co_return_co_await(never_ready_awaitable_value<int&>{}) };
 
     // Act
     bool ready{ task.await_ready() };
@@ -525,7 +526,7 @@ TEST_CASE("task<T&>.await_ready() returns false when task suspends")
 TEST_CASE("task<T&>.await_suspend() returns true when task is suspended")
 {
     // Arrange
-    task<int&> task{ task_value_co_return_co_await(never_ready_awaitable_value<int&>{}) };
+    async::task<int&> task{ task_value_co_return_co_await(never_ready_awaitable_value<int&>{}) };
     std::noop_coroutine_handle handle{ std::noop_coroutine() };
 
     // Act
@@ -540,7 +541,7 @@ TEST_CASE("task<T&>.await_suspend() returns false when task is not suspended")
     // Arrange
     int unusedStorage{ 123 };
     int& unusedValue{ unusedStorage };
-    task<int&> task{ task_value_co_return<int&>(unusedValue) };
+    async::task<int&> task{ task_value_co_return<int&>(unusedValue) };
     std::noop_coroutine_handle handle{ std::noop_coroutine() };
 
     // Act
@@ -553,9 +554,9 @@ TEST_CASE("task<T&>.await_suspend() returns false when task is not suspended")
 TEST_CASE("task<T&>.await_suspend() does not run continuation when task is suspended")
 {
     // Arrange
-    task<int&> task{ task_value_co_return_co_await(never_ready_awaitable_value<int&>{}) };
-    atomic_acq_rel<bool> run{ false };
-    auto continuation = [&run](awaitable_result<int&>) { run = true; };
+    async::task<int&> task{ task_value_co_return_co_await(never_ready_awaitable_value<int&>{}) };
+    async::details::atomic_acq_rel<bool> run{ false };
+    auto continuation = [&run](async::awaitable_result<int&>) { run = true; };
 
     // Act
     awaitable_then(task, continuation);
@@ -570,10 +571,10 @@ TEST_CASE("task<T&>.await_suspend() runs continuation when task completes")
     callback_thread callbackThread{};
     int unusedStorage{ 123 };
     int& unusedValue{ unusedStorage };
-    task<int&> task{ task_value_co_return_co_await(
+    async::task<int&> task{ task_value_co_return_co_await(
         suspend_to_paused_callback_thread_awaitable_value<int&>{ callbackThread, unusedValue }) };
-    event_signal done{};
-    auto continuation = [&done](awaitable_result<int&>) { done.set(); };
+    async::event_signal done{};
+    auto continuation = [&done](async::awaitable_result<int&>) { done.set(); };
     awaitable_then(task, continuation);
 
     // Act
@@ -591,10 +592,10 @@ TEST_CASE("task<T&>.await_suspend() does not run continuation before leaving cor
     callback_thread callbackThread{};
     int unusedStorage{ 123 };
     int& unusedValue{ unusedStorage };
-    task<int&> task{ task_value_co_return_co_await_with_scope(
+    async::task<int&> task{ task_value_co_return_co_await_with_scope(
         scopeDestroyed, suspend_to_paused_callback_thread_awaitable_value<int&>{ callbackThread, unusedValue }) };
-    event_signal done{};
-    auto continuation = [&scopeDestroyed, &scopeDestroyedDuringCompletion, &done](awaitable_result<int&>) {
+    async::event_signal done{};
+    auto continuation = [&scopeDestroyed, &scopeDestroyedDuringCompletion, &done](async::awaitable_result<int&>) {
         scopeDestroyedDuringCompletion = scopeDestroyed;
         done.set();
     };
@@ -611,7 +612,7 @@ TEST_CASE("task<T&>.await_suspend() does not run continuation before leaving cor
 TEST_CASE("task<T&>.await_suspend() throws if another continuation is present")
 {
     // Arrange
-    task<int&> task{ task_value_co_return_co_await(never_ready_awaitable_value<int&>{}) };
+    async::task<int&> task{ task_value_co_return_co_await(never_ready_awaitable_value<int&>{}) };
     std::noop_coroutine_handle firstHandle{ std::noop_coroutine() };
 
     if (task.await_ready())
@@ -638,7 +639,7 @@ TEST_CASE("task<T&>.await_resume() returns co_returned value")
     // Arrange
     int storage{ 123 };
     int& expected{ storage };
-    task<int&> task{ task_value_co_return<int&>(expected) };
+    async::task<int&> task{ task_value_co_return<int&>(expected) };
 
     // Act & Assert
     int& actual{ task.await_resume() };
@@ -650,7 +651,8 @@ TEST_CASE("task<T&>.await_resume() throws when coroutine throws")
 {
     // Arrange
     std::runtime_error expected{ "expected" };
-    task<int&> task{ task_value_co_return_co_await(awaitable_value_throws<int&>{ std::make_exception_ptr(expected) }) };
+    async::task<int&> task{ task_value_co_return_co_await(
+        awaitable_value_throws<int&>{ std::make_exception_ptr(expected) }) };
 
     // Act & Assert
     REQUIRE_THROWS_MATCHES(task.await_resume(), std::runtime_error, Catch::Matchers::Message(expected.what()));
@@ -659,7 +661,7 @@ TEST_CASE("task<T&>.await_resume() throws when coroutine throws")
 TEST_CASE("task<T&>.await_resume() throws when called before completion")
 {
     // Arrange
-    task<int&> task{ task_value_co_return_co_await(never_ready_awaitable_value<int&>{}) };
+    async::task<int&> task{ task_value_co_return_co_await(never_ready_awaitable_value<int&>{}) };
 
     if (task.await_ready())
     {
@@ -678,7 +680,7 @@ TEST_CASE("task<T&>.await_resume() throws when called a second time")
     // Arrange
     int storage{ 123 };
     int& value{ storage };
-    task<int&> task{ task_value_co_return<int&>(value) };
+    async::task<int&> task{ task_value_co_return<int&>(value) };
 
     if (!task.await_ready())
     {
@@ -701,7 +703,8 @@ TEST_CASE("task<T!has_default_ctor>.await_resume() returns co_returned value")
 {
     // Arrange
     constexpr int expected{ 123 };
-    task<no_default_constructor_move_only> task{ task_value_co_return(no_default_constructor_move_only{ expected }) };
+    async::task<no_default_constructor_move_only> task{ task_value_co_return(
+        no_default_constructor_move_only{ expected }) };
 
     // Act
     no_default_constructor_move_only actual{ task.await_resume() };

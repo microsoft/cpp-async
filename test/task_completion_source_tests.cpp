@@ -10,10 +10,10 @@
 TEST_CASE("task_completion_source<void>.task() starts as not ready")
 {
     // Arrange
-    task_completion_source<void> promise{};
+    async::task_completion_source<void> promise{};
 
     // Act
-    task<void> task{ promise.task() };
+    async::task<void> task{ promise.task() };
 
     // Assert
     REQUIRE(!task.await_ready());
@@ -22,8 +22,8 @@ TEST_CASE("task_completion_source<void>.task() starts as not ready")
 TEST_CASE("task_completion_source<void>.set_value() makes its task ready")
 {
     // Arrange
-    task_completion_source<void> promise{};
-    task<void> task{ promise.task() };
+    async::task_completion_source<void> promise{};
+    async::task<void> task{ promise.task() };
 
     // Act
     promise.set_value();
@@ -32,7 +32,7 @@ TEST_CASE("task_completion_source<void>.set_value() makes its task ready")
     REQUIRE(task.await_ready());
 }
 
-inline task<void> co_await_void_finally_set_signal(task<void>&& awaitable, event_signal& done)
+inline async::task<void> co_await_void_finally_set_signal(async::task<void>&& awaitable, async::event_signal& done)
 {
     try
     {
@@ -48,8 +48,8 @@ inline task<void> co_await_void_finally_set_signal(task<void>&& awaitable, event
 TEST_CASE("task_completion_source<void>.set_value() resumes a coroutine suspended on its task")
 {
     // Arrange
-    task_completion_source<void> promise{};
-    event_signal done{};
+    async::task_completion_source<void> promise{};
+    async::event_signal done{};
     co_await_void_finally_set_signal(promise.task(), done);
 
     // Act
@@ -62,8 +62,8 @@ TEST_CASE("task_completion_source<void>.set_value() resumes a coroutine suspende
 TEST_CASE("task_completion_source<void>.set_value() makes its task not throw on await_resume().")
 {
     // Arrange
-    task_completion_source<void> promise{};
-    task<void> task{ promise.task() };
+    async::task_completion_source<void> promise{};
+    async::task<void> task{ promise.task() };
 
     // Act
     promise.set_value();
@@ -75,8 +75,8 @@ TEST_CASE("task_completion_source<void>.set_value() makes its task not throw on 
 TEST_CASE("task_completion_source<void>.set_value() throws if called a second time.")
 {
     // Arrange
-    task_completion_source<void> promise{};
-    task<void> task{ promise.task() };
+    async::task_completion_source<void> promise{};
+    async::task<void> task{ promise.task() };
     promise.set_value();
 
     // Act & Assert
@@ -89,7 +89,7 @@ TEST_CASE("task_completion_source<void>.set_value() throws if called a second ti
 TEST_CASE("task_completion_source<void>.try_set_value() returns true when not yet completed")
 {
     // Arrange
-    task_completion_source<void> promise{};
+    async::task_completion_source<void> promise{};
 
     // Act
     bool result{ promise.try_set_value() };
@@ -101,8 +101,8 @@ TEST_CASE("task_completion_source<void>.try_set_value() returns true when not ye
 TEST_CASE("task_completion_source<void>.try_set_value() makes its task ready")
 {
     // Arrange
-    task_completion_source<void> promise{};
-    task<void> task{ promise.task() };
+    async::task_completion_source<void> promise{};
+    async::task<void> task{ promise.task() };
 
     // Act
     if (!promise.try_set_value())
@@ -117,8 +117,8 @@ TEST_CASE("task_completion_source<void>.try_set_value() makes its task ready")
 TEST_CASE("task_completion_source<void>.try_set_value() resumes a coroutine suspended on its task")
 {
     // Arrange
-    task_completion_source<void> promise{};
-    event_signal done{};
+    async::task_completion_source<void> promise{};
+    async::event_signal done{};
     co_await_void_finally_set_signal(promise.task(), done);
 
     // Act
@@ -134,8 +134,8 @@ TEST_CASE("task_completion_source<void>.try_set_value() resumes a coroutine susp
 TEST_CASE("task_completion_source<void>.try_set_value() makes its task not throw on await_resume().")
 {
     // Arrange
-    task_completion_source<void> promise{};
-    task<void> task{ promise.task() };
+    async::task_completion_source<void> promise{};
+    async::task<void> task{ promise.task() };
 
     // Act
     if (!promise.try_set_value())
@@ -150,8 +150,8 @@ TEST_CASE("task_completion_source<void>.try_set_value() makes its task not throw
 TEST_CASE("task_completion_source<void>.try_set_value() returns false if called a second time.")
 {
     // Arrange
-    task_completion_source<void> promise{};
-    task<void> task{ promise.task() };
+    async::task_completion_source<void> promise{};
+    async::task<void> task{ promise.task() };
     if (!promise.try_set_value())
     {
         throw std::runtime_error{ "Precondition failed." };
@@ -167,8 +167,8 @@ TEST_CASE("task_completion_source<void>.try_set_value() returns false if called 
 TEST_CASE("task_completion_source<void>.set_exception() throws if the exception_ptr is empty")
 {
     // Arrange
-    task_completion_source<void> promise{};
-    task<void> task{ promise.task() };
+    async::task_completion_source<void> promise{};
+    async::task<void> task{ promise.task() };
     std::exception_ptr empty{};
 
     // Act & Assert
@@ -181,8 +181,8 @@ TEST_CASE("task_completion_source<void>.set_exception() throws if the exception_
 TEST_CASE("task_completion_source<void>.set_exception() makes its task ready")
 {
     // Arrange
-    task_completion_source<void> promise{};
-    task<void> task{ promise.task() };
+    async::task_completion_source<void> promise{};
+    async::task<void> task{ promise.task() };
     std::exception_ptr unused{ std::make_exception_ptr(std::runtime_error{ "" }) };
 
     // Act
@@ -195,8 +195,8 @@ TEST_CASE("task_completion_source<void>.set_exception() makes its task ready")
 TEST_CASE("task_completion_source<void>.set_exception() resumes a coroutine suspended on its task")
 {
     // Arrange
-    task_completion_source<void> promise{};
-    event_signal done{};
+    async::task_completion_source<void> promise{};
+    async::event_signal done{};
     co_await_void_finally_set_signal(promise.task(), done);
     std::exception_ptr exception{ std::make_exception_ptr(std::runtime_error{ "" }) };
 
@@ -210,8 +210,8 @@ TEST_CASE("task_completion_source<void>.set_exception() resumes a coroutine susp
 TEST_CASE("task_completion_source<void>.set_exception() makes its task throw on await_resume().")
 {
     // Arrange
-    task_completion_source<void> promise{};
-    task<void> task{ promise.task() };
+    async::task_completion_source<void> promise{};
+    async::task<void> task{ promise.task() };
     std::runtime_error expected{ "expected" };
     std::exception_ptr exception{ std::make_exception_ptr(expected) };
 
@@ -225,8 +225,8 @@ TEST_CASE("task_completion_source<void>.set_exception() makes its task throw on 
 TEST_CASE("task_completion_source<void>.set_exception() throws if called a second time.")
 {
     // Arrange
-    task_completion_source<void> promise{};
-    task<void> task{ promise.task() };
+    async::task_completion_source<void> promise{};
+    async::task<void> task{ promise.task() };
     std::exception_ptr exception{ std::make_exception_ptr(std::runtime_error{ "" }) };
     promise.set_exception(exception);
 
@@ -240,8 +240,8 @@ TEST_CASE("task_completion_source<void>.set_exception() throws if called a secon
 TEST_CASE("task_completion_source<void>.try_set_exception() returns false if the exception_ptr is empty")
 {
     // Arrange
-    task_completion_source<void> promise{};
-    task<void> task{ promise.task() };
+    async::task_completion_source<void> promise{};
+    async::task<void> task{ promise.task() };
     std::exception_ptr empty{};
 
     // Act
@@ -254,7 +254,7 @@ TEST_CASE("task_completion_source<void>.try_set_exception() returns false if the
 TEST_CASE("task_completion_source<void>.try_set_exception() returns true when not yet completed")
 {
     // Arrange
-    task_completion_source<void> promise{};
+    async::task_completion_source<void> promise{};
     std::exception_ptr exception{ std::make_exception_ptr(std::runtime_error{ "" }) };
 
     // Act
@@ -267,8 +267,8 @@ TEST_CASE("task_completion_source<void>.try_set_exception() returns true when no
 TEST_CASE("task_completion_source<void>.try_set_exception() makes its task ready")
 {
     // Arrange
-    task_completion_source<void> promise{};
-    task<void> task{ promise.task() };
+    async::task_completion_source<void> promise{};
+    async::task<void> task{ promise.task() };
     std::exception_ptr exception{ std::make_exception_ptr(std::runtime_error{ "" }) };
 
     // Act
@@ -284,8 +284,8 @@ TEST_CASE("task_completion_source<void>.try_set_exception() makes its task ready
 TEST_CASE("task_completion_source<void>.try_set_exception() resumes a coroutine suspended on its task")
 {
     // Arrange
-    task_completion_source<void> promise{};
-    event_signal done{};
+    async::task_completion_source<void> promise{};
+    async::event_signal done{};
     co_await_void_finally_set_signal(promise.task(), done);
     std::exception_ptr exception{ std::make_exception_ptr(std::runtime_error{ "" }) };
 
@@ -302,8 +302,8 @@ TEST_CASE("task_completion_source<void>.try_set_exception() resumes a coroutine 
 TEST_CASE("task_completion_source<void>.try_set_exception() makes its task throw on await_resume().")
 {
     // Arrange
-    task_completion_source<void> promise{};
-    task<void> task{ promise.task() };
+    async::task_completion_source<void> promise{};
+    async::task<void> task{ promise.task() };
     std::runtime_error expected{ "expected" };
     std::exception_ptr exception{ std::make_exception_ptr(expected) };
 
@@ -320,8 +320,8 @@ TEST_CASE("task_completion_source<void>.try_set_exception() makes its task throw
 TEST_CASE("task_completion_source<void>.try_set_exception() returns false if called a second time.")
 {
     // Arrange
-    task_completion_source<void> promise{};
-    task<void> task{ promise.task() };
+    async::task_completion_source<void> promise{};
+    async::task<void> task{ promise.task() };
     std::exception_ptr exception{ std::make_exception_ptr(std::runtime_error{ "" }) };
     if (!promise.try_set_exception(exception))
     {
@@ -338,10 +338,10 @@ TEST_CASE("task_completion_source<void>.try_set_exception() returns false if cal
 TEST_CASE("task_completion_source<T>.task() starts as not ready")
 {
     // Arrange
-    task_completion_source<int> promise{};
+    async::task_completion_source<int> promise{};
 
     // Act
-    task<int> task{ promise.task() };
+    async::task<int> task{ promise.task() };
 
     // Assert
     REQUIRE(!task.await_ready());
@@ -350,8 +350,8 @@ TEST_CASE("task_completion_source<T>.task() starts as not ready")
 TEST_CASE("task_completion_source<T>.set_value() makes its task ready")
 {
     // Arrange
-    task_completion_source<int> promise{};
-    task<int> task{ promise.task() };
+    async::task_completion_source<int> promise{};
+    async::task<int> task{ promise.task() };
     constexpr int value{ 123 };
 
     // Act
@@ -362,7 +362,7 @@ TEST_CASE("task_completion_source<T>.set_value() makes its task ready")
 }
 
 template<typename T>
-inline task<void> co_await_value_finally_set_signal(task<T>&& awaitable, event_signal& done)
+inline async::task<void> co_await_value_finally_set_signal(async::task<T>&& awaitable, async::event_signal& done)
 {
     try
     {
@@ -378,8 +378,8 @@ inline task<void> co_await_value_finally_set_signal(task<T>&& awaitable, event_s
 TEST_CASE("task_completion_source<T>.set_value() resumes a coroutine suspended on its task")
 {
     // Arrange
-    task_completion_source<int> promise{};
-    event_signal done{};
+    async::task_completion_source<int> promise{};
+    async::event_signal done{};
     co_await_value_finally_set_signal(promise.task(), done);
     constexpr int value{ 123 };
 
@@ -393,8 +393,8 @@ TEST_CASE("task_completion_source<T>.set_value() resumes a coroutine suspended o
 TEST_CASE("task_completion_source<T>.set_value() makes its task return that value on await_resume().")
 {
     // Arrange
-    task_completion_source<int> promise{};
-    task<int> task{ promise.task() };
+    async::task_completion_source<int> promise{};
+    async::task<int> task{ promise.task() };
     constexpr int expected{ 123 };
 
     // Act
@@ -407,8 +407,8 @@ TEST_CASE("task_completion_source<T>.set_value() makes its task return that valu
 TEST_CASE("task_completion_source<T>.set_value() throws if called a second time.")
 {
     // Arrange
-    task_completion_source<int> promise{};
-    task<int> task{ promise.task() };
+    async::task_completion_source<int> promise{};
+    async::task<int> task{ promise.task() };
     constexpr int value{ 123 };
     promise.set_value(value);
 
@@ -422,7 +422,7 @@ TEST_CASE("task_completion_source<T>.set_value() throws if called a second time.
 TEST_CASE("task_completion_source<T>.try_set_value() returns true when not yet completed")
 {
     // Arrange
-    task_completion_source<int> promise{};
+    async::task_completion_source<int> promise{};
     constexpr int value{ 123 };
 
     // Act
@@ -435,8 +435,8 @@ TEST_CASE("task_completion_source<T>.try_set_value() returns true when not yet c
 TEST_CASE("task_completion_source<T>.try_set_value() makes its task ready")
 {
     // Arrange
-    task_completion_source<int> promise{};
-    task<int> task{ promise.task() };
+    async::task_completion_source<int> promise{};
+    async::task<int> task{ promise.task() };
     constexpr int value{ 123 };
 
     // Act
@@ -452,8 +452,8 @@ TEST_CASE("task_completion_source<T>.try_set_value() makes its task ready")
 TEST_CASE("task_completion_source<T>.try_set_value() resumes a coroutine suspended on its task")
 {
     // Arrange
-    task_completion_source<int> promise{};
-    event_signal done{};
+    async::task_completion_source<int> promise{};
+    async::event_signal done{};
     co_await_value_finally_set_signal(promise.task(), done);
     constexpr int value{ 123 };
 
@@ -470,8 +470,8 @@ TEST_CASE("task_completion_source<T>.try_set_value() resumes a coroutine suspend
 TEST_CASE("task_completion_source<T>.try_set_value() makes its task return that value on await_resume().")
 {
     // Arrange
-    task_completion_source<int> promise{};
-    task<int> task{ promise.task() };
+    async::task_completion_source<int> promise{};
+    async::task<int> task{ promise.task() };
     constexpr int expected{ 123 };
 
     // Act
@@ -487,8 +487,8 @@ TEST_CASE("task_completion_source<T>.try_set_value() makes its task return that 
 TEST_CASE("task_completion_source<T>.try_set_value() returns false if called a second time.")
 {
     // Arrange
-    task_completion_source<int> promise{};
-    task<int> task{ promise.task() };
+    async::task_completion_source<int> promise{};
+    async::task<int> task{ promise.task() };
     constexpr int value{ 123 };
     if (!promise.try_set_value(value))
     {
@@ -505,8 +505,8 @@ TEST_CASE("task_completion_source<T>.try_set_value() returns false if called a s
 TEST_CASE("task_completion_source<T>.set_exception() throws if the exception_ptr is empty")
 {
     // Arrange
-    task_completion_source<int> promise{};
-    task<int> task{ promise.task() };
+    async::task_completion_source<int> promise{};
+    async::task<int> task{ promise.task() };
     std::exception_ptr empty{};
 
     // Act & Assert
@@ -519,8 +519,8 @@ TEST_CASE("task_completion_source<T>.set_exception() throws if the exception_ptr
 TEST_CASE("task_completion_source<T>.set_exception() makes its task ready")
 {
     // Arrange
-    task_completion_source<int> promise{};
-    task<int> task{ promise.task() };
+    async::task_completion_source<int> promise{};
+    async::task<int> task{ promise.task() };
     std::exception_ptr unused{ std::make_exception_ptr(std::runtime_error{ "" }) };
 
     // Act
@@ -533,8 +533,8 @@ TEST_CASE("task_completion_source<T>.set_exception() makes its task ready")
 TEST_CASE("task_completion_source<T>.set_exception() resumes a coroutine suspended on its task")
 {
     // Arrange
-    task_completion_source<int> promise{};
-    event_signal done{};
+    async::task_completion_source<int> promise{};
+    async::event_signal done{};
     co_await_value_finally_set_signal(promise.task(), done);
     std::exception_ptr exception{ std::make_exception_ptr(std::runtime_error{ "" }) };
 
@@ -548,8 +548,8 @@ TEST_CASE("task_completion_source<T>.set_exception() resumes a coroutine suspend
 TEST_CASE("task_completion_source<T>.set_exception() makes its task throw on await_resume().")
 {
     // Arrange
-    task_completion_source<int> promise{};
-    task<int> task{ promise.task() };
+    async::task_completion_source<int> promise{};
+    async::task<int> task{ promise.task() };
     std::runtime_error expected{ "expected" };
     std::exception_ptr exception{ std::make_exception_ptr(expected) };
 
@@ -563,8 +563,8 @@ TEST_CASE("task_completion_source<T>.set_exception() makes its task throw on awa
 TEST_CASE("task_completion_source<T>.set_exception() throws if called a second time.")
 {
     // Arrange
-    task_completion_source<int> promise{};
-    task<int> task{ promise.task() };
+    async::task_completion_source<int> promise{};
+    async::task<int> task{ promise.task() };
     std::exception_ptr exception{ std::make_exception_ptr(std::runtime_error{ "" }) };
     promise.set_exception(exception);
 
@@ -578,8 +578,8 @@ TEST_CASE("task_completion_source<T>.set_exception() throws if called a second t
 TEST_CASE("task_completion_source<T>.try_set_exception() returns false if the exception_ptr is empty")
 {
     // Arrange
-    task_completion_source<int> promise{};
-    task<int> task{ promise.task() };
+    async::task_completion_source<int> promise{};
+    async::task<int> task{ promise.task() };
     std::exception_ptr empty{};
 
     // Act
@@ -592,7 +592,7 @@ TEST_CASE("task_completion_source<T>.try_set_exception() returns false if the ex
 TEST_CASE("task_completion_source<T>.try_set_exception() returns true when not yet completed")
 {
     // Arrange
-    task_completion_source<int> promise{};
+    async::task_completion_source<int> promise{};
     std::exception_ptr exception{ std::make_exception_ptr(std::runtime_error{ "" }) };
 
     // Act
@@ -605,8 +605,8 @@ TEST_CASE("task_completion_source<T>.try_set_exception() returns true when not y
 TEST_CASE("task_completion_source<T>.try_set_exception() makes its task ready")
 {
     // Arrange
-    task_completion_source<int> promise{};
-    task<int> task{ promise.task() };
+    async::task_completion_source<int> promise{};
+    async::task<int> task{ promise.task() };
     std::exception_ptr exception{ std::make_exception_ptr(std::runtime_error{ "" }) };
 
     // Act
@@ -622,8 +622,8 @@ TEST_CASE("task_completion_source<T>.try_set_exception() makes its task ready")
 TEST_CASE("task_completion_source<T>.try_set_exception() resumes a coroutine suspended on its task")
 {
     // Arrange
-    task_completion_source<int> promise{};
-    event_signal done{};
+    async::task_completion_source<int> promise{};
+    async::event_signal done{};
     co_await_value_finally_set_signal(promise.task(), done);
     std::exception_ptr exception{ std::make_exception_ptr(std::runtime_error{ "" }) };
 
@@ -640,8 +640,8 @@ TEST_CASE("task_completion_source<T>.try_set_exception() resumes a coroutine sus
 TEST_CASE("task_completion_source<T>.try_set_exception() makes its task throw on await_resume().")
 {
     // Arrange
-    task_completion_source<int> promise{};
-    task<int> task{ promise.task() };
+    async::task_completion_source<int> promise{};
+    async::task<int> task{ promise.task() };
     std::runtime_error expected{ "expected" };
     std::exception_ptr exception{ std::make_exception_ptr(expected) };
 
@@ -658,8 +658,8 @@ TEST_CASE("task_completion_source<T>.try_set_exception() makes its task throw on
 TEST_CASE("task_completion_source<T>.try_set_exception() returns false if called a second time.")
 {
     // Arrange
-    task_completion_source<int> promise{};
-    task<int> task{ promise.task() };
+    async::task_completion_source<int> promise{};
+    async::task<int> task{ promise.task() };
     std::exception_ptr exception{ std::make_exception_ptr(std::runtime_error{ "" }) };
     if (!promise.try_set_exception(exception))
     {
@@ -676,10 +676,10 @@ TEST_CASE("task_completion_source<T>.try_set_exception() returns false if called
 TEST_CASE("task_completion_source<T&>.task() starts as not ready")
 {
     // Arrange
-    task_completion_source<int&> promise{};
+    async::task_completion_source<int&> promise{};
 
     // Act
-    task<int&> task{ promise.task() };
+    async::task<int&> task{ promise.task() };
 
     // Assert
     REQUIRE(!task.await_ready());
@@ -688,8 +688,8 @@ TEST_CASE("task_completion_source<T&>.task() starts as not ready")
 TEST_CASE("task_completion_source<T&>.set_value() makes its task ready")
 {
     // Arrange
-    task_completion_source<int&> promise{};
-    task<int&> task{ promise.task() };
+    async::task_completion_source<int&> promise{};
+    async::task<int&> task{ promise.task() };
     int storage{ 123 };
     int& value{ storage };
 
@@ -703,8 +703,8 @@ TEST_CASE("task_completion_source<T&>.set_value() makes its task ready")
 TEST_CASE("task_completion_source<T&>.set_value() resumes a coroutine suspended on its task")
 {
     // Arrange
-    task_completion_source<int&> promise{};
-    event_signal done{};
+    async::task_completion_source<int&> promise{};
+    async::event_signal done{};
     co_await_value_finally_set_signal(promise.task(), done);
     int storage{ 123 };
     int& value{ storage };
@@ -719,8 +719,8 @@ TEST_CASE("task_completion_source<T&>.set_value() resumes a coroutine suspended 
 TEST_CASE("task_completion_source<T&>.set_value() makes its task return that value on await_resume().")
 {
     // Arrange
-    task_completion_source<int&> promise{};
-    task<int&> task{ promise.task() };
+    async::task_completion_source<int&> promise{};
+    async::task<int&> task{ promise.task() };
     int storage{ 123 };
     int& expected{ storage };
 
@@ -736,8 +736,8 @@ TEST_CASE("task_completion_source<T&>.set_value() makes its task return that val
 TEST_CASE("task_completion_source<T&>.set_value() throws if called a second time.")
 {
     // Arrange
-    task_completion_source<int&> promise{};
-    task<int&> task{ promise.task() };
+    async::task_completion_source<int&> promise{};
+    async::task<int&> task{ promise.task() };
     int storage{ 123 };
     int& value{ storage };
     promise.set_value(value);
@@ -752,7 +752,7 @@ TEST_CASE("task_completion_source<T&>.set_value() throws if called a second time
 TEST_CASE("task_completion_source<T&>.try_set_value() returns true when not yet completed")
 {
     // Arrange
-    task_completion_source<int&> promise{};
+    async::task_completion_source<int&> promise{};
     int storage{ 123 };
     int& value{ storage };
 
@@ -766,8 +766,8 @@ TEST_CASE("task_completion_source<T&>.try_set_value() returns true when not yet 
 TEST_CASE("task_completion_source<T&>.try_set_value() makes its task ready")
 {
     // Arrange
-    task_completion_source<int&> promise{};
-    task<int&> task{ promise.task() };
+    async::task_completion_source<int&> promise{};
+    async::task<int&> task{ promise.task() };
     int storage{ 123 };
     int& value{ storage };
 
@@ -784,8 +784,8 @@ TEST_CASE("task_completion_source<T&>.try_set_value() makes its task ready")
 TEST_CASE("task_completion_source<T&>.try_set_value() resumes a coroutine suspended on its task")
 {
     // Arrange
-    task_completion_source<int&> promise{};
-    event_signal done{};
+    async::task_completion_source<int&> promise{};
+    async::event_signal done{};
     co_await_value_finally_set_signal(promise.task(), done);
     int storage{ 123 };
     int& value{ storage };
@@ -803,8 +803,8 @@ TEST_CASE("task_completion_source<T&>.try_set_value() resumes a coroutine suspen
 TEST_CASE("task_completion_source<T&>.try_set_value() makes its task return that value on await_resume().")
 {
     // Arrange
-    task_completion_source<int&> promise{};
-    task<int&> task{ promise.task() };
+    async::task_completion_source<int&> promise{};
+    async::task<int&> task{ promise.task() };
     int storage{ 123 };
     int& expected{ storage };
 
@@ -823,8 +823,8 @@ TEST_CASE("task_completion_source<T&>.try_set_value() makes its task return that
 TEST_CASE("task_completion_source<T&>.try_set_value() returns false if called a second time.")
 {
     // Arrange
-    task_completion_source<int&> promise{};
-    task<int&> task{ promise.task() };
+    async::task_completion_source<int&> promise{};
+    async::task<int&> task{ promise.task() };
     int storage{ 123 };
     int& value{ storage };
     if (!promise.try_set_value(value))
@@ -842,8 +842,8 @@ TEST_CASE("task_completion_source<T&>.try_set_value() returns false if called a 
 TEST_CASE("task_completion_source<T&>.set_exception() throws if the exception_ptr is empty")
 {
     // Arrange
-    task_completion_source<int&> promise{};
-    task<int&> task{ promise.task() };
+    async::task_completion_source<int&> promise{};
+    async::task<int&> task{ promise.task() };
     std::exception_ptr empty{};
 
     // Act & Assert
@@ -856,8 +856,8 @@ TEST_CASE("task_completion_source<T&>.set_exception() throws if the exception_pt
 TEST_CASE("task_completion_source<T&>.set_exception() makes its task ready")
 {
     // Arrange
-    task_completion_source<int&> promise{};
-    task<int&> task{ promise.task() };
+    async::task_completion_source<int&> promise{};
+    async::task<int&> task{ promise.task() };
     std::exception_ptr unused{ std::make_exception_ptr(std::runtime_error{ "" }) };
 
     // Act
@@ -870,8 +870,8 @@ TEST_CASE("task_completion_source<T&>.set_exception() makes its task ready")
 TEST_CASE("task_completion_source<T&>.set_exception() resumes a coroutine suspended on its task")
 {
     // Arrange
-    task_completion_source<int&> promise{};
-    event_signal done{};
+    async::task_completion_source<int&> promise{};
+    async::event_signal done{};
     co_await_value_finally_set_signal(promise.task(), done);
     std::exception_ptr exception{ std::make_exception_ptr(std::runtime_error{ "" }) };
 
@@ -885,8 +885,8 @@ TEST_CASE("task_completion_source<T&>.set_exception() resumes a coroutine suspen
 TEST_CASE("task_completion_source<T&>.set_exception() makes its task throw on await_resume().")
 {
     // Arrange
-    task_completion_source<int&> promise{};
-    task<int&> task{ promise.task() };
+    async::task_completion_source<int&> promise{};
+    async::task<int&> task{ promise.task() };
     std::runtime_error expected{ "expected" };
     std::exception_ptr exception{ std::make_exception_ptr(expected) };
 
@@ -900,8 +900,8 @@ TEST_CASE("task_completion_source<T&>.set_exception() makes its task throw on aw
 TEST_CASE("task_completion_source<T&>.set_exception() throws if called a second time.")
 {
     // Arrange
-    task_completion_source<int&> promise{};
-    task<int&> task{ promise.task() };
+    async::task_completion_source<int&> promise{};
+    async::task<int&> task{ promise.task() };
     std::exception_ptr exception{ std::make_exception_ptr(std::runtime_error{ "" }) };
     promise.set_exception(exception);
 
@@ -915,8 +915,8 @@ TEST_CASE("task_completion_source<T&>.set_exception() throws if called a second 
 TEST_CASE("task_completion_source<T&>.try_set_exception() returns false if the exception_ptr is empty")
 {
     // Arrange
-    task_completion_source<int&> promise{};
-    task<int&> task{ promise.task() };
+    async::task_completion_source<int&> promise{};
+    async::task<int&> task{ promise.task() };
     std::exception_ptr empty{};
 
     // Act
@@ -929,7 +929,7 @@ TEST_CASE("task_completion_source<T&>.try_set_exception() returns false if the e
 TEST_CASE("task_completion_source<T&>.try_set_exception() returns true when not yet completed")
 {
     // Arrange
-    task_completion_source<int&> promise{};
+    async::task_completion_source<int&> promise{};
     std::exception_ptr exception{ std::make_exception_ptr(std::runtime_error{ "" }) };
 
     // Act
@@ -942,8 +942,8 @@ TEST_CASE("task_completion_source<T&>.try_set_exception() returns true when not 
 TEST_CASE("task_completion_source<T&>.try_set_exception() makes its task ready")
 {
     // Arrange
-    task_completion_source<int&> promise{};
-    task<int&> task{ promise.task() };
+    async::task_completion_source<int&> promise{};
+    async::task<int&> task{ promise.task() };
     std::exception_ptr exception{ std::make_exception_ptr(std::runtime_error{ "" }) };
 
     // Act
@@ -959,8 +959,8 @@ TEST_CASE("task_completion_source<T&>.try_set_exception() makes its task ready")
 TEST_CASE("task_completion_source<T&>.try_set_exception() resumes a coroutine suspended on its task")
 {
     // Arrange
-    task_completion_source<int&> promise{};
-    event_signal done{};
+    async::task_completion_source<int&> promise{};
+    async::event_signal done{};
     co_await_value_finally_set_signal(promise.task(), done);
     std::exception_ptr exception{ std::make_exception_ptr(std::runtime_error{ "" }) };
 
@@ -977,8 +977,8 @@ TEST_CASE("task_completion_source<T&>.try_set_exception() resumes a coroutine su
 TEST_CASE("task_completion_source<T&>.try_set_exception() makes its task throw on await_resume().")
 {
     // Arrange
-    task_completion_source<int&> promise{};
-    task<int&> task{ promise.task() };
+    async::task_completion_source<int&> promise{};
+    async::task<int&> task{ promise.task() };
     std::runtime_error expected{ "expected" };
     std::exception_ptr exception{ std::make_exception_ptr(expected) };
 
@@ -995,8 +995,8 @@ TEST_CASE("task_completion_source<T&>.try_set_exception() makes its task throw o
 TEST_CASE("task_completion_source<T&>.try_set_exception() returns false if called a second time.")
 {
     // Arrange
-    task_completion_source<int&> promise{};
-    task<int&> task{ promise.task() };
+    async::task_completion_source<int&> promise{};
+    async::task<int&> task{ promise.task() };
     std::exception_ptr exception{ std::make_exception_ptr(std::runtime_error{ "" }) };
     if (!promise.try_set_exception(exception))
     {
@@ -1014,8 +1014,8 @@ TEST_CASE("task_completion_source<T!copyable>.set_value() makes its task return 
 {
     // Arrange
     constexpr std::string_view expected{ "expected" };
-    task_completion_source<std::unique_ptr<std::string_view>> promise{};
-    task<std::unique_ptr<std::string_view>> task{ promise.task() };
+    async::task_completion_source<std::unique_ptr<std::string_view>> promise{};
+    async::task<std::unique_ptr<std::string_view>> task{ promise.task() };
 
     // Act
     promise.set_value(std::make_unique<std::string_view>(expected));
@@ -1028,8 +1028,8 @@ TEST_CASE("task_completion_source<T!has_default_ctor>.set_value() makes its task
 {
     // Arrange
     constexpr int expected{ 123 };
-    task_completion_source<no_default_constructor_move_only> promise{};
-    task<no_default_constructor_move_only> task{ promise.task() };
+    async::task_completion_source<no_default_constructor_move_only> promise{};
+    async::task<no_default_constructor_move_only> task{ promise.task() };
 
     // Act
     promise.set_value(no_default_constructor_move_only{ expected });
@@ -1040,7 +1040,10 @@ TEST_CASE("task_completion_source<T!has_default_ctor>.set_value() makes its task
 
 struct move_only_signal_and_black_on_move final
 {
-    explicit move_only_signal_and_black_on_move(event_signal& moving, event_signal& resume, event_signal& done) :
+    explicit move_only_signal_and_black_on_move(
+        async::event_signal& moving,
+        async::event_signal& resume,
+        async::event_signal& done) :
         m_moving{ moving }, m_resume{ resume }, m_done{ done }
     {}
 
@@ -1061,26 +1064,26 @@ struct move_only_signal_and_black_on_move final
     move_only_signal_and_black_on_move& operator=(move_only_signal_and_black_on_move&& other) noexcept = delete;
 
 private:
-    event_signal& m_moving;
-    const event_signal& m_resume;
-    event_signal& m_done;
+    async::event_signal& m_moving;
+    const async::event_signal& m_resume;
+    async::event_signal& m_done;
 };
 
 TEST_CASE("task_completion_source<T>.try_set_value() returns false when another thread is partway through setting.")
 {
     // Arrange
-    task_completion_source<move_only_signal_and_black_on_move> promise{};
-    task<move_only_signal_and_black_on_move> task{ promise.task() };
-    event_signal startedMove{};
-    event_signal resumeMove{};
-    event_signal moveDone{};
+    async::task_completion_source<move_only_signal_and_black_on_move> promise{};
+    async::task<move_only_signal_and_black_on_move> task{ promise.task() };
+    async::event_signal startedMove{};
+    async::event_signal resumeMove{};
+    async::event_signal moveDone{};
     simplejthread setValueThread{ [&promise, &startedMove, &resumeMove, &moveDone]() {
         promise.set_value(move_only_signal_and_black_on_move{ startedMove, resumeMove, moveDone });
     } };
 
-    event_signal ignore1{};
-    event_signal doNotBlock{};
-    event_signal ignore2{};
+    async::event_signal ignore1{};
+    async::event_signal doNotBlock{};
+    async::event_signal ignore2{};
     doNotBlock.set();
     startedMove.wait_for_or_throw(std::chrono::seconds{ 1 });
 

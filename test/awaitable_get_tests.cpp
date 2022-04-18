@@ -24,11 +24,11 @@ TEST_CASE("awaitable_get<void> waits until resume from suspension")
 {
     // Arrange
     callback_thread callbackThread{};
-    atomic_acq_rel<bool> waited{ false };
+    async::details::atomic_acq_rel<bool> waited{ false };
     auto awaitable = awaitable_void_resume_spy(callbackThread, waited);
 
     // Act
-    awaitable_get(std::move(awaitable));
+    async::awaitable_get(std::move(awaitable));
 
     // Assert
     REQUIRE(waited.load());
@@ -43,19 +43,21 @@ TEST_CASE("awaitable_get<void> throws if awaitable throws")
 
     // Act & Assert
     REQUIRE_THROWS_MATCHES(
-        awaitable_get(awaitable_void_throws{ thrown }), std::runtime_error, Catch::Matchers::Message(expected.what()));
+        async::awaitable_get(awaitable_void_throws{ thrown }),
+        std::runtime_error,
+        Catch::Matchers::Message(expected.what()));
 }
 
 TEST_CASE("awaitable_get<T> waits until resume from suspension")
 {
     // Arrange
     callback_thread callbackThread{};
-    atomic_acq_rel<bool> waited{ false };
+    async::details::atomic_acq_rel<bool> waited{ false };
     constexpr bool unusedValue{ true };
     auto awaitable = awaitable_value_resume_spy(callbackThread, waited, unusedValue);
 
     // Act
-    awaitable_get(std::move(awaitable));
+    async::awaitable_get(std::move(awaitable));
 
     // Assert
     REQUIRE(waited.load());
@@ -70,7 +72,7 @@ TEST_CASE("awaitable_get<T> throws if awaitable throws")
 
     // Act & Assert
     REQUIRE_THROWS_MATCHES(
-        awaitable_get(awaitable_value_throws<bool>{ thrown }),
+        async::awaitable_get(awaitable_value_throws<bool>{ thrown }),
         std::runtime_error,
         Catch::Matchers::Message(expected.what()));
 }
@@ -84,7 +86,7 @@ TEST_CASE("awaitable_get<T> returns awaitable value")
     auto awaitable = awaitable_value(std::move(verifyMoveOnlyTypeWorksAtCompileTime));
 
     // Act
-    std::unique_ptr<std::string_view> actual{ awaitable_get(std::move(awaitable)) };
+    std::unique_ptr<std::string_view> actual{ async::awaitable_get(std::move(awaitable)) };
 
     // Assert
     REQUIRE(expected == *actual);
@@ -94,13 +96,13 @@ TEST_CASE("awaitable_get<T&> waits until resume from suspension")
 {
     // Arrange
     callback_thread callbackThread{};
-    atomic_acq_rel<bool> waited{ false };
+    async::details::atomic_acq_rel<bool> waited{ false };
     bool unusedValueStorage{ true };
     bool& unusedValue{ unusedValueStorage };
     auto awaitable = awaitable_value_resume_spy<bool&>(callbackThread, waited, unusedValue);
 
     // Act
-    awaitable_get(std::move(awaitable));
+    async::awaitable_get(std::move(awaitable));
 
     // Assert
     REQUIRE(waited.load());
@@ -115,7 +117,7 @@ TEST_CASE("awaitable_get<T&> throws if awaitable throws")
 
     // Act & Assert
     REQUIRE_THROWS_MATCHES(
-        awaitable_get(awaitable_value_throws<bool&>{ thrown }),
+        async::awaitable_get(awaitable_value_throws<bool&>{ thrown }),
         std::runtime_error,
         Catch::Matchers::Message(expected.what()));
 }
@@ -128,7 +130,7 @@ TEST_CASE("awaitable_get<T&> returns awaitable value")
     auto awaitable = awaitable_reference_value(expected);
 
     // Act
-    int& actual{ awaitable_get(std::move(awaitable)) };
+    int& actual{ async::awaitable_get(std::move(awaitable)) };
 
     // Assert
     expected = 456; // ensure not a distinct copy
@@ -142,7 +144,7 @@ TEST_CASE("awaitable_get<T!has_default_ctor> returns awaitable value")
     auto awaitable = awaitable_value(no_default_constructor_move_only{ expected });
 
     // Act
-    no_default_constructor_move_only actual{ awaitable_get(std::move(awaitable)) };
+    no_default_constructor_move_only actual{ async::awaitable_get(std::move(awaitable)) };
 
     // Assert
     REQUIRE(expected == actual.get());
@@ -154,7 +156,7 @@ TEST_CASE("awaitable_get<T w/member operator co_await> returns awaitable value")
     constexpr int expected{ 123 };
 
     // Act
-    int actual{ awaitable_get(awaitable_value_member_operator_co_await{ expected }) };
+    int actual{ async::awaitable_get(awaitable_value_member_operator_co_await{ expected }) };
 
     // Assert
     REQUIRE(expected == actual);
@@ -166,7 +168,7 @@ TEST_CASE("awaitable_get<T w/non-member operator co_await> returns awaitable val
     constexpr int expected{ 123 };
 
     // Act
-    int actual{ awaitable_get(awaitable_value_non_member_operator_co_await{ expected }) };
+    int actual{ async::awaitable_get(awaitable_value_non_member_operator_co_await{ expected }) };
 
     // Assert
     REQUIRE(expected == actual);

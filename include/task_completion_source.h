@@ -6,7 +6,7 @@
 #include "atomic_acq_rel.h"
 #include "task.h"
 
-namespace details
+namespace async::details
 {
     enum class task_completion_state
     {
@@ -22,7 +22,7 @@ namespace details
             m_taskState{ task_state<T>::create_shared() }, m_completionState{ task_completion_state::unset }
         {}
 
-        task<T> task() const noexcept { return ::task<T>{ m_taskState }; }
+        task<T> task() const noexcept { return ::async::task<T>{ m_taskState }; }
 
         template<typename... Args>
         void set_value(Args&&... args)
@@ -120,42 +120,45 @@ namespace details
     };
 }
 
-template<typename T>
-struct task_completion_source final
+namespace async
 {
-    task<T> task() const noexcept { return m_core.task(); }
-
-    void set_value(T value) { m_core.set_value(value); }
-
-    [[nodiscard]] bool try_set_value(T value) noexcept { return m_core.try_set_value(value); };
-
-    void set_exception(std::exception_ptr exception) { m_core.set_exception(exception); }
-
-    [[nodiscard]] bool try_set_exception(std::exception_ptr exception) noexcept
+    template<typename T>
+    struct task_completion_source final
     {
-        return m_core.try_set_exception(exception);
-    }
+        task<T> task() const noexcept { return m_core.task(); }
 
-private:
-    details::task_completion_source_core<T> m_core;
-};
+        void set_value(T value) { m_core.set_value(value); }
 
-template<>
-struct task_completion_source<void> final
-{
-    task<void> task() const noexcept { return m_core.task(); }
+        [[nodiscard]] bool try_set_value(T value) noexcept { return m_core.try_set_value(value); };
 
-    void set_value() { m_core.set_value(); }
+        void set_exception(std::exception_ptr exception) { m_core.set_exception(exception); }
 
-    [[nodiscard]] bool try_set_value() noexcept { return m_core.try_set_value(); };
+        [[nodiscard]] bool try_set_exception(std::exception_ptr exception) noexcept
+        {
+            return m_core.try_set_exception(exception);
+        }
 
-    void set_exception(std::exception_ptr exception) { m_core.set_exception(exception); }
+    private:
+        details::task_completion_source_core<T> m_core;
+    };
 
-    [[nodiscard]] bool try_set_exception(std::exception_ptr exception) noexcept
+    template<>
+    struct task_completion_source<void> final
     {
-        return m_core.try_set_exception(exception);
-    }
+        task<void> task() const noexcept { return m_core.task(); }
 
-private:
-    details::task_completion_source_core<void> m_core;
-};
+        void set_value() { m_core.set_value(); }
+
+        [[nodiscard]] bool try_set_value() noexcept { return m_core.try_set_value(); };
+
+        void set_exception(std::exception_ptr exception) { m_core.set_exception(exception); }
+
+        [[nodiscard]] bool try_set_exception(std::exception_ptr exception) noexcept
+        {
+            return m_core.try_set_exception(exception);
+        }
+
+    private:
+        details::task_completion_source_core<void> m_core;
+    };
+}

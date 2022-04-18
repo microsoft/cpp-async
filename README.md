@@ -16,7 +16,7 @@ inline /*<some_awaitable_type>*/ run_async() { co_return; }
 
 int main()
 {
-    awaitable_get(run_async());
+    async::awaitable_get(run_async());
 }
 ```
 
@@ -29,7 +29,7 @@ inline /*<some_awaitable_type>*/ read_file_async()
 
 int main()
 {
-    std::string text{ awaitable_get(read_file_async()) };
+    std::string text{ async::awaitable_get(read_file_async()) };
     printf("%s\n", text.c_str());
 }
 ```
@@ -53,8 +53,8 @@ inline /*<some_awaitable_type>*/ read_file_async()
 
 int main()
 {
-    event_signal done{};
-    awaitable_then(read_file_async(), [&done](awaitable_result<std::string> result)
+    async::event_signal done{};
+    async::awaitable_then(read_file_async(), [&done](awaitable_result<std::string> result)
         {
             printf("%s\n", result().c_str());
             done.set();
@@ -73,7 +73,7 @@ inline /*<some_awaitable_type>*/ read_file_async()
 std::future<std::string> read_file_future()
 {
     std::shared_ptr<std::promise<std::string>> promise{ std::make_shared<std::promise<std::string>>() };
-    awaitable_then(read_file_async(), [promise](awaitable_result<std::string> result)
+    async::awaitable_then(read_file_async(), [promise](awaitable_result<std::string> result)
         {
             try
             {
@@ -119,7 +119,7 @@ alternative would avoid the need for an internal heap allocation when creating t
 
 Example usage:
 ```c++
-inline task<void> do_async()
+inline async::task<void> do_async()
 {
     /* do some work */
     co_await /* some awaitable object */;
@@ -129,7 +129,7 @@ inline task<void> do_async()
 ```
 
 ```c++
-inline task<std::string> read_async()
+inline async::task<std::string> read_async()
 {
     co_await /* some awaitable object */;
     co_return std::string{ "contents" };
@@ -137,12 +137,12 @@ inline task<std::string> read_async()
 ```
 
 ```c++
-inline task<std::unique_ptr<std::string>> return_move_only_async()
+inline async::task<std::unique_ptr<std::string>> return_move_only_async()
 {
     co_return std::make_unique<std::string>("contents");
 }
 
-inline task<void> use_move_only_async()
+inline async::task<void> use_move_only_async()
 {
     std::unique_ptr<std::string> text{ co_await return_move_only_async() };
     printf("%s\n", text->c_str());
@@ -150,13 +150,13 @@ inline task<void> use_move_only_async()
 ```
 
 ```c++
-inline task<int&> return_reference_type_async(int& a, int& b)
+inline async::task<int&> return_reference_type_async(int& a, int& b)
 {
     int& larger{ a > b ? a : b };
     co_return larger;
 }
 
-inline task<void> use_reference_type_async()
+inline async::task<void> use_reference_type_async()
 {
     int first{ 3 };
     int second{ 6 };
@@ -167,7 +167,7 @@ inline task<void> use_reference_type_async()
 ```
 
 ```c++
-inline task<void> fire_and_forget()
+inline async::task<void> fire_and_forget()
 {
     /* do some work */
 
@@ -181,7 +181,7 @@ inline task<void> fire_and_forget()
     co_return;
 }
 
-inline task<void> fire_and_forget_except_crash_on_failure()
+inline async::task<void> fire_and_forget_except_crash_on_failure()
 {
     try
     {
@@ -214,9 +214,10 @@ The design of this type is intentionally similar to TaskCompletionSource<TResult
 
 Example usage:
 ```c++
-task<int> compute_async(std::thread& callbackThread)
+async::task<int> compute_async(std::thread& callbackThread)
 {
-    std::shared_ptr<task_completion_source<int>> promise{ std::make_shared<task_completion_source<int>>() };
+    std::shared_ptr<async::task_completion_source<int>> promise{
+        std::make_shared<async::task_completion_source<int>>() };
     // Warning: without the sleep below, the may run and be destroyed before it is assigned to callbackThread.
     // Capture the task_completion_source shared_ptr by value, or it will get destructed before the callbackThread runs.
     callbackThread = std::thread{ [promise]()
@@ -232,7 +233,7 @@ task<int> compute_async(std::thread& callbackThread)
 int main()
 {
     std::thread callbackThread{};
-    printf("[completed]\nThe task returned %i\n", awaitable_get(compute_async(callbackThread)));
+    printf("[completed]\nThe task returned %i\n", async::awaitable_get(compute_async(callbackThread)));
     callbackThread.join();
 }
 ```
@@ -256,7 +257,7 @@ inline /*<some_awaitable_type>*/ read_file_async()
 // Convert to legacy C++ 11 async; for example, if needed to defer refactoring the caller.
 inline std::future<std::string> read_file_future()
 {
-    return to_future(read_file_async());
+    return async::to_future(read_file_async());
 }
 
 int main()

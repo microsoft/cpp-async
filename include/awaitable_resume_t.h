@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace details
+namespace async::details
 {
     template<typename T, typename = std::void_t<void, void>>
     struct co_await_operator_or_self final
@@ -35,5 +35,8 @@ namespace details
     };
 }
 
-template<typename T>
-using awaitable_resume_t = typename details::awaitable_resume<T>::type;
+namespace async
+{
+    template<typename T>
+    using awaitable_resume_t = typename details::awaitable_resume<T>::type;
+}

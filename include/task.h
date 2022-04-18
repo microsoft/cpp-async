@@ -9,7 +9,7 @@
 #include "atomic_acq_rel.h"
 #include "awaitable_result.h"
 
-namespace details
+namespace async::details
 {
     template<typename T>
     struct task_promise_type;
@@ -69,75 +69,79 @@ namespace details
     struct task_promise_type;
 }
 
-template<typename T>
-struct task final
+namespace async
 {
-    explicit task(const std::shared_ptr<details::task_state<T>>& state) : m_state{ state } {}
-
-    using promise_type = details::task_promise_type<T>;
-
-    [[nodiscard]] constexpr bool await_ready() const noexcept
+    template<typename T>
+    struct task final
     {
-        void* currentStateOrCompletion{ m_state->stateOrCompletion };
+        explicit task(const std::shared_ptr<details::task_state<T>>& state) : m_state{ state } {}
 
-        return currentStateOrCompletion == m_state->ready_state() || currentStateOrCompletion == m_state->done_state();
-    }
+        using promise_type = details::task_promise_type<T>;
 
-    [[nodiscard]] constexpr bool await_suspend(std::coroutine_handle<> handle) const
-    {
-        void* handleAddress{ handle.address() };
-
-        // In previous testing, it appeared that a non-empty continuation handle could have a nullptr .address(),
-        // perhaps related to compiler or other optimizations, when it is known that no code acutally needs to be run
-        // when continuing.
-        // Attempts to reproduce that behavior have been unsuccessful, but still handle that situation just in case.
-        // Always treat such empty continuations as "run now" so we preserve nullptr as a sentinel value.
-        if (handleAddress == nullptr)
+        [[nodiscard]] constexpr bool await_ready() const noexcept
         {
-            return false;
+            void* currentStateOrCompletion{ m_state->stateOrCompletion };
+
+            return currentStateOrCompletion == m_state->ready_state() ||
+                   currentStateOrCompletion == m_state->done_state();
         }
 
-        void* currentStateOrCompletion{ m_state->running_state() };
-
-        if (!m_state->stateOrCompletion.compare_exchange_strong(currentStateOrCompletion, handleAddress))
+        [[nodiscard]] constexpr bool await_suspend(std::coroutine_handle<> handle) const
         {
-            if (currentStateOrCompletion != m_state->ready_state())
+            void* handleAddress{ handle.address() };
+
+            // In previous testing, it appeared that a non-empty continuation handle could have a nullptr .address(),
+            // perhaps related to compiler or other optimizations, when it is known that no code acutally needs to be
+            // run when continuing. Attempts to reproduce that behavior have been unsuccessful, but still handle that
+            // situation just in case. Always treat such empty continuations as "run now" so we preserve nullptr as a
+            // sentinel value.
+            if (handleAddress == nullptr)
             {
-                throw std::runtime_error{ "task<T> may be co_awaited (or have await_suspend() used) only once." };
+                return false;
             }
 
-            return false;
+            void* currentStateOrCompletion{ m_state->running_state() };
+
+            if (!m_state->stateOrCompletion.compare_exchange_strong(currentStateOrCompletion, handleAddress))
+            {
+                if (currentStateOrCompletion != m_state->ready_state())
+                {
+                    throw std::runtime_error{ "task<T> may be co_awaited (or have await_suspend() used) only once." };
+                }
+
+                return false;
+            }
+
+            return true;
         }
 
-        return true;
-    }
-
-    [[nodiscard]] constexpr T await_resume() const
-    {
-        void* currentStateOrCompletion{ m_state->ready_state() };
-
-        if (!m_state->stateOrCompletion.compare_exchange_strong(currentStateOrCompletion, m_state->done_state()))
+        [[nodiscard]] constexpr T await_resume() const
         {
-            if (currentStateOrCompletion == m_state->done_state())
+            void* currentStateOrCompletion{ m_state->ready_state() };
+
+            if (!m_state->stateOrCompletion.compare_exchange_strong(currentStateOrCompletion, m_state->done_state()))
             {
-                throw std::runtime_error{ "task<T> may be co_awaited (or have await_resume() used) only once." };
+                if (currentStateOrCompletion == m_state->done_state())
+                {
+                    throw std::runtime_error{ "task<T> may be co_awaited (or have await_resume() used) only once." };
+                }
+                else
+                {
+                    throw std::runtime_error{
+                        "task<T>.await_resume() may not be called before await_ready() returns true."
+                    };
+                }
             }
-            else
-            {
-                throw std::runtime_error{
-                    "task<T>.await_resume() may not be called before await_ready() returns true."
-                };
-            }
+
+            return m_state->result();
         }
 
-        return m_state->result();
-    }
+    private:
+        std::shared_ptr<details::task_state<T>> m_state;
+    };
+}
 
-private:
-    std::shared_ptr<details::task_state<T>> m_state;
-};
-
-namespace details
+namespace async::details
 {
     template<typename T>
     struct symmetric_transfer final

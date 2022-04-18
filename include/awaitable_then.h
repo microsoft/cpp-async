@@ -7,7 +7,7 @@
 #include "awaitable_result.h"
 #include "awaitable_resume_t.h"
 
-namespace details
+namespace async::details
 {
     struct then_task final
     {
@@ -65,10 +65,13 @@ namespace details
     };
 }
 
-template<typename Awaitable, typename Continuation>
-inline void awaitable_then(Awaitable awaitable, Continuation continuation)
+namespace async
 {
-    using T = awaitable_resume_t<Awaitable>;
+    template<typename Awaitable, typename Continuation>
+    inline void awaitable_then(Awaitable awaitable, Continuation continuation)
+    {
+        using T = awaitable_resume_t<Awaitable>;
 
-    details::then_task_factory<T, Awaitable, Continuation>::create(std::move(awaitable), continuation);
+        details::then_task_factory<T, Awaitable, Continuation>::create(std::move(awaitable), continuation);
+    }
 }

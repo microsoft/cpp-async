@@ -9,7 +9,7 @@
 
 struct awaitable_void_resume_spy final
 {
-    explicit awaitable_void_resume_spy(callback_thread& thread, atomic_acq_rel<bool>& waited) :
+    explicit awaitable_void_resume_spy(callback_thread& thread, async::details::atomic_acq_rel<bool>& waited) :
         m_thread{ thread }, m_waited{ waited }
     {}
 
@@ -27,6 +27,6 @@ struct awaitable_void_resume_spy final
 
 private:
     callback_thread& m_thread;
-    atomic_acq_rel<bool>& m_waited;
+    async::details::atomic_acq_rel<bool>& m_waited;
     std::unique_ptr<bool> m_checkMoveOnlyTypeAtCompileTime;
 };

@@ -6,7 +6,7 @@
 #include <future>
 #include "awaitable_resume_t.h"
 
-namespace details
+namespace async::details
 {
     struct to_future_task final
     {
@@ -74,11 +74,14 @@ namespace details
     };
 }
 
-template<typename Awaitable>
-std::future<awaitable_resume_t<Awaitable>> to_future(Awaitable awaitable)
+namespace async
 {
-    using T = awaitable_resume_t<Awaitable>;
-    std::future<T> result{};
-    details::to_future_factory<T, Awaitable>::create(std::move(awaitable), result);
-    return result;
+    template<typename Awaitable>
+    std::future<awaitable_resume_t<Awaitable>> to_future(Awaitable awaitable)
+    {
+        using T = awaitable_resume_t<Awaitable>;
+        std::future<T> result{};
+        details::to_future_factory<T, Awaitable>::create(std::move(awaitable), result);
+        return result;
+    }
 }

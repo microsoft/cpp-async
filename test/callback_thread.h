@@ -54,8 +54,8 @@ struct callback_thread final
         resume();
     }
 
-    event_signal m_wait;
-    atomic_acq_rel<void*> m_callback;
+    async::event_signal m_wait;
+    async::details::atomic_acq_rel<void*> m_callback;
     // Switch to std::jthread once we're c++20.
     const simplejthread m_thread;
 };

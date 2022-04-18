@@ -8,7 +8,7 @@
 #include "awaitable_resume_t.h"
 #include "event_signal.h"
 
-namespace details
+namespace async::details
 {
     template<typename T>
     struct get_task_promise;
@@ -109,15 +109,18 @@ namespace details
     }
 }
 
-template<typename Awaitable>
-inline awaitable_resume_t<Awaitable> awaitable_get(Awaitable awaitable)
+namespace async
 {
-    using T = awaitable_resume_t<Awaitable>;
-
-    struct factory final
+    template<typename Awaitable>
+    inline awaitable_resume_t<Awaitable> awaitable_get(Awaitable awaitable)
     {
-        static details::get_task<T> create(Awaitable awaitable) { co_return co_await std::move(awaitable); }
-    };
+        using T = awaitable_resume_t<Awaitable>;
 
-    return factory::create(std::move(awaitable)).get();
+        struct factory final
+        {
+            static details::get_task<T> create(Awaitable awaitable) { co_return co_await std::move(awaitable); }
+        };
+
+        return factory::create(std::move(awaitable)).get();
+    }
 }

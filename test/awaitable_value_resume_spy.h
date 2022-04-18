@@ -10,7 +10,7 @@
 template<typename T>
 struct awaitable_value_resume_spy final
 {
-    awaitable_value_resume_spy(callback_thread& thread, atomic_acq_rel<bool>& waited, T value) :
+    awaitable_value_resume_spy(callback_thread& thread, async::details::atomic_acq_rel<bool>& waited, T value) :
         m_thread{ thread }, m_waited{ waited }, m_value{ std::forward<T>(value) }
     {}
 
@@ -30,7 +30,7 @@ struct awaitable_value_resume_spy final
 
 private:
     callback_thread& m_thread;
-    atomic_acq_rel<bool>& m_waited;
+    async::details::atomic_acq_rel<bool>& m_waited;
     T m_value;
     std::unique_ptr<bool> m_checkMoveOnlyTypeAtCompileTime;
 };
