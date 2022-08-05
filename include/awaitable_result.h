@@ -90,6 +90,7 @@ namespace async
 
         union result_union
         {
+#pragma prefast(suppress:26495, "Do not default-initialize in a union.")
             constexpr result_union() noexcept {}
             ~result_union() noexcept {}
 
