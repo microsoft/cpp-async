@@ -46,7 +46,7 @@ TEST_CASE("awaitable_then<void> waits until resume from suspension to run comple
     REQUIRE(continued.load());
 }
 
-void rethrow_if_non_null(std::exception_ptr exception)
+static void rethrow_if_non_null(std::exception_ptr exception)
 {
     if (exception)
     {

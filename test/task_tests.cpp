@@ -13,7 +13,7 @@
 #include "event_signal.h"
 #include "no_default_constructor_move_only.h"
 
-inline async::task<void> task_void_co_return() { co_return; }
+static async::task<void> task_void_co_return() { co_return; }
 
 TEST_CASE("task<void>.await_ready() returns true when task does not suspend")
 {
@@ -41,7 +41,7 @@ struct never_ready_awaitable_void final
 };
 
 template<typename Awaitable>
-inline async::task<void> task_void_co_await(Awaitable awaitable)
+static async::task<void> task_void_co_await(Awaitable awaitable)
 {
     co_await awaitable;
 }
@@ -139,7 +139,7 @@ private:
 };
 
 template<typename Awaitable>
-inline async::task<void> task_void_co_return_co_await_with_scope(bool& scopeDestroyed, Awaitable awaitable)
+static async::task<void> task_void_co_return_co_await_with_scope(bool& scopeDestroyed, Awaitable awaitable)
 {
     scope_spy destroyBeforeContinue{ scopeDestroyed };
     co_await awaitable;
@@ -250,7 +250,7 @@ TEST_CASE("task<void>.await_resume() throws when called a second time")
 }
 
 template<typename T>
-inline async::task<T> task_value_co_return(T value)
+static async::task<T> task_value_co_return(T value)
 {
     co_return value;
 }
@@ -283,7 +283,7 @@ struct never_ready_awaitable_value final
 };
 
 template<typename Awaitable>
-inline auto task_value_co_return_co_await(Awaitable awaitable) -> async::task<decltype(awaitable.await_resume())>
+static auto task_value_co_return_co_await(Awaitable awaitable) -> async::task<decltype(awaitable.await_resume())>
 {
     co_return co_await awaitable;
 }
@@ -378,7 +378,7 @@ TEST_CASE("task<T>.await_suspend() runs continuation when task completes")
 }
 
 template<typename Awaitable>
-inline auto task_value_co_return_co_await_with_scope(bool& scopeDestroyed, Awaitable awaitable)
+static auto task_value_co_return_co_await_with_scope(bool& scopeDestroyed, Awaitable awaitable)
     -> async::task<decltype(awaitable.await_resume())>
 {
     scope_spy destroyBeforeContinue{ scopeDestroyed };

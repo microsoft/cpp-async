@@ -32,7 +32,7 @@ TEST_CASE("task_completion_source<void>.set_value() makes its task ready")
     REQUIRE(task.await_ready());
 }
 
-inline async::task<void> co_await_void_finally_set_signal(async::task<void>&& awaitable, async::event_signal& done)
+static async::task<void> co_await_void_finally_set_signal(async::task<void>&& awaitable, async::event_signal& done)
 {
     try
     {
@@ -362,7 +362,7 @@ TEST_CASE("task_completion_source<T>.set_value() makes its task ready")
 }
 
 template<typename T>
-inline async::task<void> co_await_value_finally_set_signal(async::task<T>&& awaitable, async::event_signal& done)
+static async::task<void> co_await_value_finally_set_signal(async::task<T>&& awaitable, async::event_signal& done)
 {
     try
     {
