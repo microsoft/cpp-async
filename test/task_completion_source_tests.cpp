@@ -1,11 +1,11 @@
 // © Microsoft Corporation. All rights reserved.
 
 #include <catch2/catch.hpp>
-#include "event_signal.h"
-#include "task_completion_source.h"
+#include "async/task_completion_source.h"
+#include "async/event_signal.h"
+#include "async/task.h"
 #include "no_default_constructor_move_only.h"
 #include "simplejthread.h"
-#include "task.h"
 
 TEST_CASE("task_completion_source<void>.task() starts as not ready")
 {

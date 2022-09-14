@@ -5,8 +5,8 @@
 #include <atomic>
 #include <coroutine>
 #include <stdexcept>
-#include "atomic_acq_rel.h"
-#include "event_signal.h"
+#include "async/atomic_acq_rel.h"
+#include "async/event_signal.h"
 #include "simplejthread.h"
 
 struct callback_thread final

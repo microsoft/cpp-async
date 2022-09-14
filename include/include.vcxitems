@@ -14,14 +14,14 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)atomic_acq_rel.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)awaitable_get.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)awaitable_result.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)awaitable_resume_t.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)awaitable_then.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)event_signal.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)task.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)task_completion_source.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)to_future.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)async\atomic_acq_rel.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)async\awaitable_get.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)async\awaitable_result.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)async\awaitable_resume_t.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)async\awaitable_then.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)async\event_signal.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)async\task.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)async\task_completion_source.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)async\to_future.h" />
   </ItemGroup>
 </Project>

@@ -6,8 +6,9 @@
 #include <memory>
 #include <stdexcept>
 #include <string_view>
-#include "awaitable_then.h"
-#include "atomic_acq_rel.h"
+#include "async/awaitable_then.h"
+#include "async/atomic_acq_rel.h"
+#include "async/event_signal.h"
 #include "awaitable_reference_value.h"
 #include "awaitable_value.h"
 #include "awaitable_value_member_operator_co_await.h"
@@ -18,7 +19,6 @@
 #include "awaitable_void_resume_spy.h"
 #include "awaitable_void_throws.h"
 #include "callback_thread.h"
-#include "event_signal.h"
 #include "no_default_constructor_move_only.h"
 
 TEST_CASE("awaitable_then<void> waits until resume from suspension to run completion")

@@ -7,8 +7,8 @@
 #include <stdexcept>
 #include <string_view>
 #include <catch2/catch.hpp>
-#include "awaitable_get.h"
-#include "atomic_acq_rel.h"
+#include "async/awaitable_get.h"
+#include "async/atomic_acq_rel.h"
 #include "awaitable_reference_value.h"
 #include "awaitable_value.h"
 #include "awaitable_value_member_operator_co_await.h"

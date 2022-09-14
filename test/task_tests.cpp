@@ -5,12 +5,12 @@
 #include <stdexcept>
 #include <string_view>
 #include <catch2/catch.hpp>
-#include "task.h"
-#include "awaitable_then.h"
+#include "async/task.h"
+#include "async/awaitable_then.h"
+#include "async/event_signal.h"
 #include "awaitable_value_throws.h"
 #include "awaitable_void_throws.h"
 #include "callback_thread.h"
-#include "event_signal.h"
 #include "no_default_constructor_move_only.h"
 
 static async::task<void> task_void_co_return() { co_return; }
