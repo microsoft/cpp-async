@@ -13,7 +13,10 @@
 #include "callback_thread.h"
 #include "no_default_constructor_move_only.h"
 
-static async::task<void> task_void_co_return() { co_return; }
+namespace
+{
+    async::task<void> task_void_co_return() { co_return; }
+}
 
 TEST_CASE("task<void>.await_ready() returns true when task does not suspend")
 {
@@ -27,23 +30,26 @@ TEST_CASE("task<void>.await_ready() returns true when task does not suspend")
     REQUIRE(ready);
 }
 
-struct never_ready_awaitable_void final
+namespace
 {
-    [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
-
-    constexpr void await_suspend(std::coroutine_handle<>) const noexcept {}
-
-    void await_resume() const
+    struct never_ready_awaitable_void final
     {
-        assert(false);
-        throw std::runtime_error{ "This awaitable never resumes." };
-    }
-};
+        [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
 
-template<typename Awaitable>
-static async::task<void> task_void_co_await(Awaitable awaitable)
-{
-    co_await awaitable;
+        constexpr void await_suspend(std::coroutine_handle<>) const noexcept {}
+
+        void await_resume() const
+        {
+            assert(false);
+            throw std::runtime_error{ "This awaitable never resumes." };
+        }
+    };
+
+    template<typename Awaitable>
+    async::task<void> task_void_co_await(Awaitable awaitable)
+    {
+        co_await awaitable;
+    }
 }
 
 TEST_CASE("task<void>.await_ready() returns false when task suspends")
@@ -98,19 +104,23 @@ TEST_CASE("task<void>.await_suspend() does not run continuation when task is sus
     REQUIRE(!run);
 }
 
-struct suspend_to_paused_callback_thread_awaitable_void final
+namespace
 {
-    explicit suspend_to_paused_callback_thread_awaitable_void(callback_thread& thread) noexcept : m_thread{ thread } {}
+    struct suspend_to_paused_callback_thread_awaitable_void final
+    {
+        explicit suspend_to_paused_callback_thread_awaitable_void(callback_thread& thread) noexcept : m_thread{ thread }
+        {}
 
-    [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
+        [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
 
-    void await_suspend(std::coroutine_handle<> handle) const noexcept { m_thread.callback(handle); }
+        void await_suspend(std::coroutine_handle<> handle) const noexcept { m_thread.callback(handle); }
 
-    constexpr void await_resume() const noexcept {}
+        constexpr void await_resume() const noexcept {}
 
-private:
-    callback_thread& m_thread;
-};
+    private:
+        callback_thread& m_thread;
+    };
+}
 
 TEST_CASE("task<void>.await_suspend() runs continuation when task completes")
 {
@@ -128,22 +138,25 @@ TEST_CASE("task<void>.await_suspend() runs continuation when task completes")
     REQUIRE(done.wait_for(std::chrono::seconds{ 1 }));
 }
 
-struct scope_spy final
+namespace
 {
-    constexpr explicit scope_spy(bool& destroyed) noexcept : m_destroyed{ destroyed } {}
+    struct scope_spy final
+    {
+        constexpr explicit scope_spy(bool& destroyed) noexcept : m_destroyed{ destroyed } {}
 
-    ~scope_spy() noexcept { m_destroyed = true; }
+        ~scope_spy() noexcept { m_destroyed = true; }
 
-private:
-    bool& m_destroyed;
-};
+    private:
+        bool& m_destroyed;
+    };
 
-template<typename Awaitable>
-static async::task<void> task_void_co_return_co_await_with_scope(bool& scopeDestroyed, Awaitable awaitable)
-{
-    scope_spy destroyBeforeContinue{ scopeDestroyed };
-    co_await awaitable;
-    co_return;
+    template<typename Awaitable>
+    async::task<void> task_void_co_return_co_await_with_scope(bool& scopeDestroyed, Awaitable awaitable)
+    {
+        scope_spy destroyBeforeContinue{ scopeDestroyed };
+        co_await awaitable;
+        co_return;
+    }
 }
 
 TEST_CASE("task<void>.await_suspend() does not run continuation before leaving coroutine scope")
@@ -249,10 +262,13 @@ TEST_CASE("task<void>.await_resume() throws when called a second time")
         Catch::Matchers::Message("task<T> may be co_awaited (or have await_resume() used) only once."));
 }
 
-template<typename T>
-static async::task<T> task_value_co_return(T value)
+namespace
 {
-    co_return value;
+    template<typename T>
+    async::task<T> task_value_co_return(T value)
+    {
+        co_return value;
+    }
 }
 
 TEST_CASE("task<T>.await_ready() returns true when task does not suspend")
@@ -268,24 +284,27 @@ TEST_CASE("task<T>.await_ready() returns true when task does not suspend")
     REQUIRE(ready);
 }
 
-template<typename T>
-struct never_ready_awaitable_value final
+namespace
 {
-    [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
-
-    constexpr void await_suspend(std::coroutine_handle<>) const noexcept {}
-
-    [[nodiscard]] T await_resume() const
+    template<typename T>
+    struct never_ready_awaitable_value final
     {
-        assert(false);
-        throw std::runtime_error{ "This awaitable never resumes." };
-    }
-};
+        [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
 
-template<typename Awaitable>
-static auto task_value_co_return_co_await(Awaitable awaitable) -> async::task<decltype(awaitable.await_resume())>
-{
-    co_return co_await awaitable;
+        constexpr void await_suspend(std::coroutine_handle<>) const noexcept {}
+
+        [[nodiscard]] T await_resume() const
+        {
+            assert(false);
+            throw std::runtime_error{ "This awaitable never resumes." };
+        }
+    };
+
+    template<typename Awaitable>
+    auto task_value_co_return_co_await(Awaitable awaitable) -> async::task<decltype(awaitable.await_resume())>
+    {
+        co_return co_await awaitable;
+    }
 }
 
 TEST_CASE("task<T>.await_ready() returns false when task suspends")
@@ -341,23 +360,26 @@ TEST_CASE("task<T>.await_suspend() does not run continuation when task is suspen
     REQUIRE(!run);
 }
 
-template<typename T>
-struct suspend_to_paused_callback_thread_awaitable_value final
+namespace
 {
-    explicit suspend_to_paused_callback_thread_awaitable_value(callback_thread& thread, T value) noexcept :
-        m_thread{ thread }, m_value{ value }
-    {}
+    template<typename T>
+    struct suspend_to_paused_callback_thread_awaitable_value final
+    {
+        explicit suspend_to_paused_callback_thread_awaitable_value(callback_thread& thread, T value) noexcept :
+            m_thread{ thread }, m_value{ value }
+        {}
 
-    [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
+        [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
 
-    void await_suspend(std::coroutine_handle<> handle) const noexcept { m_thread.callback(handle); }
+        void await_suspend(std::coroutine_handle<> handle) const noexcept { m_thread.callback(handle); }
 
-    [[nodiscard]] constexpr T await_resume() const noexcept { return m_value; }
+        [[nodiscard]] constexpr T await_resume() const noexcept { return m_value; }
 
-private:
-    callback_thread& m_thread;
-    T m_value;
-};
+    private:
+        callback_thread& m_thread;
+        T m_value;
+    };
+}
 
 TEST_CASE("task<T>.await_suspend() runs continuation when task completes")
 {
@@ -377,12 +399,15 @@ TEST_CASE("task<T>.await_suspend() runs continuation when task completes")
     REQUIRE(done.wait_for(std::chrono::seconds{ 1 }));
 }
 
-template<typename Awaitable>
-static auto task_value_co_return_co_await_with_scope(bool& scopeDestroyed, Awaitable awaitable)
-    -> async::task<decltype(awaitable.await_resume())>
+namespace
 {
-    scope_spy destroyBeforeContinue{ scopeDestroyed };
-    co_return co_await awaitable;
+    template<typename Awaitable>
+    auto task_value_co_return_co_await_with_scope(bool& scopeDestroyed, Awaitable awaitable)
+        -> async::task<decltype(awaitable.await_resume())>
+    {
+        scope_spy destroyBeforeContinue{ scopeDestroyed };
+        co_return co_await awaitable;
+    }
 }
 
 TEST_CASE("task<T>.await_suspend() does not run continuation before leaving coroutine scope")

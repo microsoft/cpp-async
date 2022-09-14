@@ -32,17 +32,19 @@ TEST_CASE("task_completion_source<void>.set_value() makes its task ready")
     REQUIRE(task.await_ready());
 }
 
-static async::task<void> co_await_void_finally_set_signal(async::task<void>&& awaitable, async::event_signal& done)
+namespace
 {
-    try
+    async::task<void> co_await_void_finally_set_signal(async::task<void>&& awaitable, async::event_signal& done)
     {
-        co_await std::move(awaitable);
-    }
-    catch (...)
-    {
-    }
+        try
+        {
+            co_await std::move(awaitable);
+        }
+        catch (...)
+        {}
 
-    done.set();
+        done.set();
+    }
 }
 
 TEST_CASE("task_completion_source<void>.set_value() resumes a coroutine suspended on its task")
@@ -361,18 +363,20 @@ TEST_CASE("task_completion_source<T>.set_value() makes its task ready")
     REQUIRE(task.await_ready());
 }
 
-template<typename T>
-static async::task<void> co_await_value_finally_set_signal(async::task<T>&& awaitable, async::event_signal& done)
+namespace
 {
-    try
+    template<typename T>
+    async::task<void> co_await_value_finally_set_signal(async::task<T>&& awaitable, async::event_signal& done)
     {
-        (void)(co_await std::move(awaitable));
-    }
-    catch (...)
-    {
-    }
+        try
+        {
+            (void)(co_await std::move(awaitable));
+        }
+        catch (...)
+        {}
 
-    done.set();
+        done.set();
+    }
 }
 
 TEST_CASE("task_completion_source<T>.set_value() resumes a coroutine suspended on its task")
@@ -1038,36 +1042,39 @@ TEST_CASE("task_completion_source<T!has_default_ctor>.set_value() makes its task
     REQUIRE(task.await_resume().get() == expected);
 }
 
-struct move_only_signal_and_black_on_move final
+namespace
 {
-    explicit move_only_signal_and_black_on_move(
-        async::event_signal& moving,
-        async::event_signal& resume,
-        async::event_signal& done) :
-        m_moving{ moving }, m_resume{ resume }, m_done{ done }
-    {}
-
-    move_only_signal_and_black_on_move(const move_only_signal_and_black_on_move&) = delete;
-
-    move_only_signal_and_black_on_move(move_only_signal_and_black_on_move&& other) noexcept :
-        m_moving{ other.m_moving }, m_resume{ other.m_resume }, m_done{ other.m_done }
+    struct move_only_signal_and_black_on_move final
     {
-        m_moving.set();
-        m_resume.wait_for_or_throw(std::chrono::seconds{ 1 });
-        m_done.set();
-    }
+        explicit move_only_signal_and_black_on_move(
+            async::event_signal& moving,
+            async::event_signal& resume,
+            async::event_signal& done) :
+            m_moving{ moving }, m_resume{ resume }, m_done{ done }
+        {}
 
-    ~move_only_signal_and_black_on_move() noexcept = default;
+        move_only_signal_and_black_on_move(const move_only_signal_and_black_on_move&) = delete;
 
-    move_only_signal_and_black_on_move& operator=(const move_only_signal_and_black_on_move&) = delete;
+        move_only_signal_and_black_on_move(move_only_signal_and_black_on_move&& other) noexcept :
+            m_moving{ other.m_moving }, m_resume{ other.m_resume }, m_done{ other.m_done }
+        {
+            m_moving.set();
+            m_resume.wait_for_or_throw(std::chrono::seconds{ 1 });
+            m_done.set();
+        }
 
-    move_only_signal_and_black_on_move& operator=(move_only_signal_and_black_on_move&& other) noexcept = delete;
+        ~move_only_signal_and_black_on_move() noexcept = default;
 
-private:
-    async::event_signal& m_moving;
-    const async::event_signal& m_resume;
-    async::event_signal& m_done;
-};
+        move_only_signal_and_black_on_move& operator=(const move_only_signal_and_black_on_move&) = delete;
+
+        move_only_signal_and_black_on_move& operator=(move_only_signal_and_black_on_move&& other) noexcept = delete;
+
+    private:
+        async::event_signal& m_moving;
+        const async::event_signal& m_resume;
+        async::event_signal& m_done;
+    };
+}
 
 TEST_CASE("task_completion_source<T>.try_set_value() returns false when another thread is partway through setting.")
 {
