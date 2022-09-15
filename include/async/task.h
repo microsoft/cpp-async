@@ -24,7 +24,7 @@ namespace async::details
         {
             std::shared_ptr<task_state> result{ std::make_shared<task_state>() };
             result->stateOrCompletion = result->running_state();
-            return std::move(result);
+            return result;
         }
 
         [[nodiscard]] void* running_state() const noexcept { return const_cast<task_state*>(this); };
