@@ -23,7 +23,7 @@ namespace async::details
         {
         }
 
-        task<T> task() const noexcept { return ::async::task<T>{ m_taskState }; }
+        ::async::task<T> task() const noexcept { return ::async::task<T>{ m_taskState }; }
 
         template <typename... Args>
         void set_value(Args&&... args)
@@ -166,7 +166,7 @@ namespace async
     template <typename T>
     struct task_completion_source final
     {
-        task<T> task() const noexcept { return m_core.task(); }
+        ::async::task<T> task() const noexcept { return m_core.task(); }
 
         void set_value(T value) { m_core.set_value(value); }
 
@@ -206,7 +206,7 @@ namespace async
     template <>
     struct task_completion_source<void> final
     {
-        task<void> task() const noexcept { return m_core.task(); }
+        ::async::task<void> task() const noexcept { return m_core.task(); }
 
         void set_value() { m_core.set_value(); }
 
