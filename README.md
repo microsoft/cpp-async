@@ -108,7 +108,7 @@ A caller may only co_await a task<T> once, and the result of the task is moved o
 When working with the task<T> directly (rather than only passing it directly to co_await), a caller may cancel execution
 of any code that would resume after the task completes by destructing the task. (Destructing the task does not stop the
 task's coroutine from running, just any continuation that would run after the task's coroutine completes.) As a result,
-an exception thrown from a task will be ignored if no caller consumers the task's result. (A caller can avoid this
+an exception thrown from a task will be ignored if no caller consumes the task's result. (A caller can avoid this
 behavior by consuming the task's result and handling the exception differently; for example by co_awaiting the task from
 another coroutine and calling std::terminate when it throws.)
 
