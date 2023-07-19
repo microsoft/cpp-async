@@ -91,7 +91,7 @@ namespace async
             void* handleAddress{ handle.address() };
 
             // In previous testing, it appeared that a non-empty continuation handle could have a nullptr .address(),
-            // perhaps related to compiler or other optimizations, when it is known that no code acutally needs to be
+            // perhaps related to compiler or other optimizations, when it is known that no code actually needs to be
             // run when continuing. Attempts to reproduce that behavior have been unsuccessful, but still handle that
             // situation just in case. Always treat such empty continuations as "run now" so we preserve nullptr as a
             // sentinel value.
