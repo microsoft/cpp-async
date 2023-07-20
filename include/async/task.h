@@ -144,34 +144,33 @@ namespace async
 namespace async::details
 {
     template<typename T>
-    struct symmetric_transfer final
+    constexpr std::coroutine_handle<> get_completion(const std::weak_ptr<task_state<T>>& state)
     {
-        constexpr explicit symmetric_transfer(std::weak_ptr<task_state<T>>&& state) : m_state{ std::move(state) } {}
+        std::shared_ptr<task_state<T>> sharedState{ state.lock() };
 
-        [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
-
-        constexpr std::coroutine_handle<> await_suspend(std::coroutine_handle<>) const noexcept
+        if (sharedState)
         {
-            std::shared_ptr<task_state<T>> state{ m_state.lock() };
+            std::coroutine_handle<> possibleCompletion{ sharedState->mark_ready() };
 
-            if (state)
+            if (possibleCompletion)
             {
-                std::coroutine_handle<> possibleCompletion{ state->mark_ready() };
-
-                if (possibleCompletion)
-                {
-                    return possibleCompletion;
-                }
+                return possibleCompletion;
             }
-
-            return std::noop_coroutine();
         }
 
-        constexpr void await_resume() const noexcept {}
+        return std::coroutine_handle<>{};
+    }
 
-    private:
-        std::weak_ptr<task_state<T>> m_state;
-    };
+    template<typename T>
+    constexpr void run_completion_if_exists(const std::weak_ptr<task_state<T>>& state)
+    {
+        std::coroutine_handle<> possibleCompletion{ get_completion(state) };
+
+        if (possibleCompletion)
+        {
+            possibleCompletion();
+        }
+    }
 
     template<typename T>
     struct task_promise_type final
@@ -185,9 +184,10 @@ namespace async::details
 
         constexpr std::suspend_never initial_suspend() const noexcept { return {}; }
 
-        symmetric_transfer<T> final_suspend() const noexcept
+        constexpr std::suspend_never final_suspend() const noexcept
         {
-            return symmetric_transfer<T>{ std::weak_ptr<task_state<T>>{ std::move(m_state) } };
+            run_completion_if_exists(m_state);
+            return {};
         }
 
         constexpr void unhandled_exception() const noexcept
@@ -226,9 +226,10 @@ namespace async::details
 
         constexpr std::suspend_never initial_suspend() const noexcept { return {}; }
 
-        symmetric_transfer<void> final_suspend() const noexcept
+        constexpr std::suspend_never final_suspend() const noexcept
         {
-            return symmetric_transfer<void>{ std::weak_ptr<task_state<void>>{ std::move(m_state) } };
+            run_completion_if_exists(m_state);
+            return {};
         }
 
         void unhandled_exception() const noexcept
