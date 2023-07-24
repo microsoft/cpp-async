@@ -34,6 +34,20 @@ namespace async::details
         std::coroutine_handle<get_task_promise<T>> m_handle;
     };
 
+    struct get_task_final_suspend final
+    {
+        constexpr get_task_final_suspend(event_signal& done) noexcept : m_done{ done } {}
+
+        [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
+
+        void await_suspend(std::coroutine_handle<>) const noexcept { m_done.set(); }
+
+        constexpr void await_resume() const noexcept {}
+
+    private:
+        event_signal& m_done;
+    };
+
     template<typename T>
     struct get_task_promise final
     {
@@ -46,11 +60,7 @@ namespace async::details
 
         constexpr std::suspend_never initial_suspend() const noexcept { return {}; }
 
-        std::suspend_always final_suspend() noexcept
-        {
-            m_done.set();
-            return {};
-        }
+        constexpr get_task_final_suspend final_suspend() noexcept { return { m_done }; }
 
         void unhandled_exception() noexcept { m_result.set_exception(std::current_exception()); }
 
@@ -77,11 +87,7 @@ namespace async::details
 
         constexpr std::suspend_never initial_suspend() const noexcept { return {}; }
 
-        std::suspend_always final_suspend() noexcept
-        {
-            m_done.set();
-            return {};
-        }
+        constexpr get_task_final_suspend final_suspend() noexcept { return { m_done }; }
 
         void unhandled_exception() noexcept { m_resultException = std::current_exception(); }
 

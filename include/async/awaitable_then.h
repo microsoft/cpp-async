@@ -38,7 +38,6 @@ namespace async::details
             }
 
             continuation(std::move(result));
-
             co_return;
         }
     };
