@@ -98,7 +98,7 @@ TEST_CASE("task<void>.await_suspend() does not run continuation when task is sus
     auto continuation = [&run](async::awaitable_result<void>) { run = true; };
 
     // Act
-    awaitable_then(task, continuation);
+    async::awaitable_then(task, continuation);
 
     // Assert
     REQUIRE(!run);
@@ -129,7 +129,7 @@ TEST_CASE("task<void>.await_suspend() runs continuation when task completes")
     async::task<void> task{ task_void_co_await(suspend_to_paused_callback_thread_awaitable_void{ callbackThread }) };
     async::event_signal done{};
     auto continuation = [&done](async::awaitable_result<void>) { done.set(); };
-    awaitable_then(task, continuation);
+    async::awaitable_then(task, continuation);
 
     // Act
     callbackThread.resume();
@@ -172,7 +172,7 @@ TEST_CASE("task<void>.await_suspend() does not run continuation before leaving c
         scopeDestroyedDuringCompletion = scopeDestroyed;
         done.set();
     };
-    awaitable_then(task, continuation);
+    async::awaitable_then(task, continuation);
 
     // Act
     callbackThread.resume();
@@ -354,7 +354,7 @@ TEST_CASE("task<T>.await_suspend() does not run continuation when task is suspen
     auto continuation = [&run](async::awaitable_result<int>) { run = true; };
 
     // Act
-    awaitable_then(task, continuation);
+    async::awaitable_then(task, continuation);
 
     // Assert
     REQUIRE(!run);
@@ -390,7 +390,7 @@ TEST_CASE("task<T>.await_suspend() runs continuation when task completes")
         suspend_to_paused_callback_thread_awaitable_value{ callbackThread, unusedValue }) };
     async::event_signal done{};
     auto continuation = [&done](async::awaitable_result<int>) { done.set(); };
-    awaitable_then(task, continuation);
+    async::awaitable_then(task, continuation);
 
     // Act
     callbackThread.resume();
@@ -424,7 +424,7 @@ TEST_CASE("task<T>.await_suspend() does not run continuation before leaving coro
         scopeDestroyedDuringCompletion = scopeDestroyed;
         done.set();
     };
-    awaitable_then(task, continuation);
+    async::awaitable_then(task, continuation);
 
     // Act
     callbackThread.resume();
@@ -584,7 +584,7 @@ TEST_CASE("task<T&>.await_suspend() does not run continuation when task is suspe
     auto continuation = [&run](async::awaitable_result<int&>) { run = true; };
 
     // Act
-    awaitable_then(task, continuation);
+    async::awaitable_then(task, continuation);
 
     // Assert
     REQUIRE(!run);
@@ -600,7 +600,7 @@ TEST_CASE("task<T&>.await_suspend() runs continuation when task completes")
         suspend_to_paused_callback_thread_awaitable_value<int&>{ callbackThread, unusedValue }) };
     async::event_signal done{};
     auto continuation = [&done](async::awaitable_result<int&>) { done.set(); };
-    awaitable_then(task, continuation);
+    async::awaitable_then(task, continuation);
 
     // Act
     callbackThread.resume();
@@ -624,7 +624,7 @@ TEST_CASE("task<T&>.await_suspend() does not run continuation before leaving cor
         scopeDestroyedDuringCompletion = scopeDestroyed;
         done.set();
     };
-    awaitable_then(task, continuation);
+    async::awaitable_then(task, continuation);
 
     // Act
     callbackThread.resume();
