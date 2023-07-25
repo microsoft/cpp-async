@@ -54,7 +54,7 @@ namespace async::details
 
         void unhandled_exception() noexcept { m_result.set_exception(std::current_exception()); }
 
-        constexpr void return_value(T value) noexcept { m_result.set_value(std::forward<T>(value)); }
+        void return_value(T value) noexcept { m_result.set_value(std::forward<T>(value)); }
 
         T get()
         {
