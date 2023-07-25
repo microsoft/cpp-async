@@ -205,6 +205,32 @@ int main()
 }
 ```
 
+# task_canceled
+
+For implementations that wish to treat cancellation as exceptional, this exception type can be thrown to indicate that
+a task responded to a cancellation request rather than completing successfully.
+
+Alternatives to exceptions include returning a sentinel value or using std::excepted (C++23). For details, see
+the Cancellation section below.
+
+Example usage:
+```c++
+async::task<int> simulate_send_recv_async(int data, std::stop_token stopToken)
+{
+    // Simulate asynchronous networking calls and canceling them when stopToken is signaled.
+    // (For example, a POSIX-based implementation might use APIs such as aio_write and aio_cancel.)
+    async::event_signal stop{};
+    std::stop_callback stopCallback{ stopToken, [&stop]() { stop.set(); } };
+
+    if (stop.wait_for(std::chrono::seconds{ 5 }))
+    {
+        throw async::task_canceled{};
+    }
+
+    co_return data + 1;
+}
+```
+
 # task_completion_source<T>
 
 This type controls a task and allows it to be returned and completed separately. Is is designed for producing an
@@ -264,6 +290,204 @@ int main()
 {
     std::string text{ read_file_future().get() };
     printf("%s\n", text.c_str());
+}
+```
+
+# Cancellation
+
+A task can support cancellation requests using std::stop_token. Mulitple options exist for communicating that a task has
+been canceled, including returning a sentinel value, using std::expected and std::unexpected, or throwing an exception.
+
+The following example code provides a harness for running a coroutine that cancels on SIGINT:
+
+```c++
+#include <atomic>
+#include <csignal>
+#include <iostream>
+#include <stop_token>
+#include <thread>
+#include "async/awaitable_get.h"
+#include "async/task.h"
+
+namespace
+{
+    std::atomic_flag g_stop = ATOMIC_FLAG_INIT;
+
+    void handle_interrupt(int signal) noexcept
+    {
+        if (signal != SIGINT)
+        {
+            return;
+        }
+
+        g_stop.test_and_set();
+        g_stop.notify_all();
+    }
+
+    void monitor_interrupt(std::stop_source& stopSource)
+    {
+        g_stop.wait(false);
+        stopSource.request_stop();
+    }
+}
+
+// Add run_async from one of the specific cancellation options below.
+
+int main(int argc, char* argv[])
+{
+    std::ignore = argc;
+    std::ignore = argv;
+
+    // stop_source for CTRL+C
+    std::ignore = std::signal(SIGINT, handle_interrupt);
+    std::stop_source interruptStopSource{};
+    std::thread monitorInterrupt{ monitor_interrupt, std::ref(interruptStopSource) };
+
+    try
+    {
+        async::awaitable_get(run_async(interruptStopSource.get_token()));
+
+        g_stop.test_and_set();
+        g_stop.notify_all();
+        monitorInterrupt.join();
+    }
+    catch (...)
+    {
+        g_stop.test_and_set();
+        g_stop.notify_all();
+        monitorInterrupt.join();
+    }
+}
+```
+
+## Cancellation: Returning a Sentinel Value
+
+A task can communicate cancellation by returning a sentinel value.
+
+Example code (see the harness above to make a complete program):
+```c++
+async::task<int> simulate_send_recv_async(int data, std::stop_token stopToken)
+{
+    // Simulate calls to networking APIs, canceling them when stopToken is signaled.
+    // (For example, a POSIX-based implementation might use APIs such as aio_write and aio_cancel.)
+    async::event_signal stop{};
+    std::stop_callback stopCallback{ stopToken, [&stop]() { stop.set(); } };
+
+    if (stop.wait_for(std::chrono::seconds{ 5 }))
+    {
+        co_return -1;
+    }
+
+    co_return data + 1;
+}
+
+async::task<void> run_async(std::stop_token stopToken)
+{
+    std::cout << "simulating cancelable async network call (CTRL+C to cancel) . . .\n";
+    std::cout.flush();
+
+    int response{ co_await simulate_send_recv_async(123, stopToken) };
+
+    if (response == -1)
+    {
+        std::cout << "canceled\n";
+    }
+    else
+    {
+        std::cout << "done\n";
+    }
+
+    co_return;
+}
+```
+
+## Cancellation: std::expected and std::unexpected (C++23)
+
+A task can communicate cancellation by returning std::unexpected.
+
+Example code (see the harness above to make a complete program):
+```c++
+#include <expected>
+
+enum class send_receive_error
+{
+    canceled
+};
+
+async::task<std::expected<int, send_receive_error>> simulate_send_recv_async(int data, std::stop_token stopToken)
+{
+    // Simulate asynchronous networking calls and canceling them when stopToken is signaled.
+    // (For example, a POSIX-based implementation might use APIs such as aio_write and aio_cancel.)
+    async::event_signal stop{};
+    std::stop_callback stopCallback{ stopToken, [&stop]() { stop.set(); } };
+
+    if (stop.wait_for(std::chrono::seconds{ 5 }))
+    {
+        co_return std::unexpected(send_receive_error::canceled);
+    }
+
+    co_return data + 1;
+}
+
+async::task<void> run_async(std::stop_token stopToken)
+{
+    std::cout << "simulating cancelable async network call (CTRL+C to cancel) . . .\n";
+    std::cout.flush();
+
+    std::expected<int, send_receive_error> result{ co_await simulate_send_recv_async(123, stopToken) };
+
+    if (result)
+    {
+        std::cout << "done\n";
+    }
+    else
+    {
+        std::cout << "canceled\n";
+    }
+
+    co_return;
+}
+```
+
+## Cancellation: Throwing an Exception
+
+A task can communicate cancellation by throwing a task_canceled exception.
+
+Example code (see the harness above to make a complete program):
+```c++
+#include "async/task_canceled.h"
+
+async::task<int> simulate_send_recv_async(int data, std::stop_token stopToken)
+{
+    // Simulate asynchronous networking calls and canceling them when stopToken is signaled.
+    // (For example, a POSIX-based implementation might use APIs such as aio_write and aio_cancel.)
+    async::event_signal stop{};
+    std::stop_callback stopCallback{ stopToken, [&stop]() { stop.set(); } };
+
+    if (stop.wait_for(std::chrono::seconds{ 5 }))
+    {
+        throw async::task_canceled{};
+    }
+
+    co_return data + 1;
+}
+
+async::task<void> run_async(std::stop_token stopToken)
+{
+    std::cout << "simulating cancelable async network call (CTRL+C to cancel) . . .\n";
+    std::cout.flush();
+
+    try
+    {
+        std::ignore = co_await simulate_send_recv_async(123, stopToken);
+        std::cout << "done\n";
+    }
+    catch (const async::task_canceled&)
+    {
+        std::cout << "canceled\n";
+    }
+
+    co_return;
 }
 ```
 
