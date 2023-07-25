@@ -143,6 +143,27 @@ namespace async
 
 namespace async::details
 {
+    struct symmetric_transfer final
+    {
+        constexpr explicit symmetric_transfer(std::coroutine_handle<> continuation) noexcept :
+            m_continuation{ continuation }
+        {
+        }
+
+        [[nodiscard]] constexpr bool await_ready() const noexcept { return !m_continuation; }
+
+        std::coroutine_handle<> await_suspend(std::coroutine_handle<> handle) const noexcept
+        {
+            handle.destroy();
+            return m_continuation;
+        }
+
+        constexpr void await_resume() const noexcept {}
+
+    private:
+        std::coroutine_handle<> m_continuation;
+    };
+
     template <typename T>
     std::coroutine_handle<> get_completion(const std::weak_ptr<task_state<T>>& state) noexcept
     {
@@ -162,23 +183,6 @@ namespace async::details
     }
 
     template <typename T>
-    void run_completion_if_exists(const std::weak_ptr<task_state<T>>& state) noexcept
-    {
-        const std::coroutine_handle<> possibleCompletion{ get_completion(state) };
-
-        if (possibleCompletion)
-        {
-            // This call is not technically noexcept; it could throw only if the coroutine has an unhandled exception
-            // and the call to its promise.unhandled_exception() itself throws. Because the C++20 standard requires that
-            // co_await of a final_suspend not be potentially throwing, and this function is called from task's
-            // final_suspend, we must treat this case as fatal. Note that once symmetric transfer is possible, it would
-            // avoid the need to run the completion here (we could return the coroutine_handle instead), avoiding
-            // running a potentially-throwing member within a final_suspend.
-            possibleCompletion();
-        }
-    }
-
-    template <typename T>
     struct task_promise_type final
     {
         task<T> get_return_object()
@@ -190,11 +194,7 @@ namespace async::details
 
         constexpr std::suspend_never initial_suspend() const noexcept { return {}; }
 
-        std::suspend_never final_suspend() const noexcept
-        {
-            run_completion_if_exists(m_state);
-            return {};
-        }
+        symmetric_transfer final_suspend() const noexcept { return symmetric_transfer{ get_completion(m_state) }; }
 
         void unhandled_exception() const noexcept
         {
@@ -232,11 +232,7 @@ namespace async::details
 
         constexpr std::suspend_never initial_suspend() const noexcept { return {}; }
 
-        std::suspend_never final_suspend() const noexcept
-        {
-            run_completion_if_exists(m_state);
-            return {};
-        }
+        symmetric_transfer final_suspend() const noexcept { return symmetric_transfer{ get_completion(m_state) }; }
 
         void unhandled_exception() const noexcept
         {

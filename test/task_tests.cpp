@@ -6,7 +6,6 @@
 #include <string_view>
 #include <catch2/catch.hpp>
 #include "async/task.h"
-#include "async/awaitable_then.h"
 #include "async/event_signal.h"
 #include "awaitable_value_throws.h"
 #include "awaitable_void_throws.h"
@@ -90,15 +89,24 @@ TEST_CASE("task<void>.await_suspend() returns false when task is not suspended")
     REQUIRE(!suspended);
 }
 
+namespace
+{
+    template <typename Awaitable, typename Continuation>
+    async::task<void> task_void_co_await_then(Awaitable awaitable, Continuation continuation)
+    {
+        co_await awaitable;
+        continuation();
+    }
+}
+
 TEST_CASE("task<void>.await_suspend() does not run continuation when task is suspended")
 {
     // Arrange
-    async::task<void> task{ task_void_co_await(never_ready_awaitable_void{}) };
     async::details::atomic_acq_rel<bool> run{ false };
-    auto continuation = [&run](async::awaitable_result<void>) { run = true; };
+    auto continuation = [&run]() { run = true; };
 
     // Act
-    async::awaitable_then(task, continuation);
+    async::task<void> task{ task_void_co_await_then(never_ready_awaitable_void{}, continuation) };
 
     // Assert
     REQUIRE(!run);
@@ -127,10 +135,10 @@ TEST_CASE("task<void>.await_suspend() runs continuation when task completes")
 {
     // Arrange
     callback_thread callbackThread{};
-    async::task<void> task{ task_void_co_await(suspend_to_paused_callback_thread_awaitable_void{ callbackThread }) };
     async::event_signal done{};
-    auto continuation = [&done](async::awaitable_result<void>) { done.set(); };
-    async::awaitable_then(task, continuation);
+    auto continuation = [&done]() { done.set(); };
+    async::task<void> task{ task_void_co_await_then(
+        suspend_to_paused_callback_thread_awaitable_void{ callbackThread }, continuation) };
 
     // Act
     callbackThread.resume();
@@ -151,11 +159,16 @@ namespace
         bool& m_destroyed;
     };
 
-    template <typename Awaitable>
-    async::task<void> task_void_co_return_co_await_with_scope(bool& scopeDestroyed, Awaitable awaitable)
+    template <typename Awaitable, typename Continuation>
+    async::task<void> task_void_co_return_co_await_with_scope_then(
+        bool& scopeDestroyed, Awaitable awaitable, Continuation continuation)
     {
-        scope_spy destroyBeforeContinue{ scopeDestroyed };
-        co_await awaitable;
+        {
+            scope_spy destroyBeforeContinue{ scopeDestroyed };
+            co_await awaitable;
+        }
+
+        continuation();
         co_return;
     }
 }
@@ -166,15 +179,14 @@ TEST_CASE("task<void>.await_suspend() does not run continuation before leaving c
     bool scopeDestroyed{ false };
     bool scopeDestroyedDuringCompletion{};
     callback_thread callbackThread{};
-    async::task<void> task{ task_void_co_return_co_await_with_scope(
-        scopeDestroyed, suspend_to_paused_callback_thread_awaitable_void{ callbackThread }) };
     async::event_signal done{};
-    auto continuation = [&scopeDestroyed, &scopeDestroyedDuringCompletion, &done](async::awaitable_result<void>)
+    auto continuation = [&scopeDestroyed, &scopeDestroyedDuringCompletion, &done]()
     {
         scopeDestroyedDuringCompletion = scopeDestroyed;
         done.set();
     };
-    async::awaitable_then(task, continuation);
+    async::task<void> task{ task_void_co_return_co_await_with_scope_then(
+        scopeDestroyed, suspend_to_paused_callback_thread_awaitable_void{ callbackThread }, continuation) };
 
     // Act
     callbackThread.resume();
@@ -342,52 +354,40 @@ TEST_CASE("task<T>.await_suspend() returns false when task is not suspended")
     REQUIRE(!suspended);
 }
 
+namespace
+{
+    template <typename Awaitable, typename Continuation, typename T>
+    async::task<T> task_value_co_await_then(Awaitable awaitable, Continuation continuation, T result)
+    {
+        co_await awaitable;
+        continuation();
+        co_return result;
+    }
+}
+
 TEST_CASE("task<T>.await_suspend() does not run continuation when task is suspended")
 {
     // Arrange
-    async::task<int> task{ task_value_co_return_co_await(never_ready_awaitable_value<int>{}) };
     async::details::atomic_acq_rel<bool> run{ false };
-    auto continuation = [&run](async::awaitable_result<int>) { run = true; };
+    auto continuation = [&run]() { run = true; };
+    constexpr int unusedValue{ 123 };
 
     // Act
-    async::awaitable_then(task, continuation);
+    async::task<int> task{ task_value_co_await_then(never_ready_awaitable_void{}, continuation, unusedValue) };
 
     // Assert
     REQUIRE(!run);
-}
-
-namespace
-{
-    template <typename T>
-    struct suspend_to_paused_callback_thread_awaitable_value final
-    {
-        explicit suspend_to_paused_callback_thread_awaitable_value(callback_thread& thread, T value) noexcept :
-            m_thread{ thread }, m_value{ value }
-        {
-        }
-
-        [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
-
-        void await_suspend(std::coroutine_handle<> handle) const noexcept { m_thread.callback(handle); }
-
-        [[nodiscard]] constexpr T await_resume() const noexcept { return m_value; }
-
-    private:
-        callback_thread& m_thread;
-        T m_value;
-    };
 }
 
 TEST_CASE("task<T>.await_suspend() runs continuation when task completes")
 {
     // Arrange
     callback_thread callbackThread{};
-    constexpr int unusedValue{ 123 };
-    async::task<int> task{ task_value_co_return_co_await(
-        suspend_to_paused_callback_thread_awaitable_value{ callbackThread, unusedValue }) };
     async::event_signal done{};
-    auto continuation = [&done](async::awaitable_result<int>) { done.set(); };
-    async::awaitable_then(task, continuation);
+    auto continuation = [&done]() { done.set(); };
+    constexpr int unusedValue{ 123 };
+    async::task<int> task{ task_value_co_await_then(
+        suspend_to_paused_callback_thread_awaitable_void{ callbackThread }, continuation, unusedValue) };
 
     // Act
     callbackThread.resume();
@@ -398,12 +398,17 @@ TEST_CASE("task<T>.await_suspend() runs continuation when task completes")
 
 namespace
 {
-    template <typename Awaitable>
-    auto task_value_co_return_co_await_with_scope(bool& scopeDestroyed, Awaitable awaitable)
-        -> async::task<decltype(awaitable.await_resume())>
+    template <typename Awaitable, typename Continuation, typename T>
+    async::task<T> task_value_co_await_with_scope_then(
+        bool& scopeDestroyed, Awaitable awaitable, Continuation continuation, T result)
     {
-        scope_spy destroyBeforeContinue{ scopeDestroyed };
-        co_return co_await awaitable;
+        {
+            scope_spy destroyBeforeContinue{ scopeDestroyed };
+            co_await awaitable;
+        }
+
+        continuation();
+        co_return result;
     }
 }
 
@@ -414,15 +419,14 @@ TEST_CASE("task<T>.await_suspend() does not run continuation before leaving coro
     bool scopeDestroyedDuringCompletion{};
     callback_thread callbackThread{};
     constexpr int unusedValue{ 123 };
-    async::task<int> task{ task_value_co_return_co_await_with_scope(
-        scopeDestroyed, suspend_to_paused_callback_thread_awaitable_value{ callbackThread, unusedValue }) };
     async::event_signal done{};
-    auto continuation = [&scopeDestroyed, &scopeDestroyedDuringCompletion, &done](async::awaitable_result<int>)
+    auto continuation = [&scopeDestroyed, &scopeDestroyedDuringCompletion, &done]()
     {
         scopeDestroyedDuringCompletion = scopeDestroyed;
         done.set();
     };
-    async::awaitable_then(task, continuation);
+    async::task<int> task{ task_value_co_await_with_scope_then(scopeDestroyed,
+        suspend_to_paused_callback_thread_awaitable_void{ callbackThread }, continuation, unusedValue) };
 
     // Act
     callbackThread.resume();
@@ -571,12 +575,14 @@ TEST_CASE("task<T&>.await_suspend() returns false when task is not suspended")
 TEST_CASE("task<T&>.await_suspend() does not run continuation when task is suspended")
 {
     // Arrange
-    async::task<int&> task{ task_value_co_return_co_await(never_ready_awaitable_value<int&>{}) };
     async::details::atomic_acq_rel<bool> run{ false };
-    auto continuation = [&run](async::awaitable_result<int&>) { run = true; };
+    auto continuation = [&run]() { run = true; };
+    int unusedStorage{ 123 };
+    int& unusedValue{ unusedStorage };
 
     // Act
-    async::awaitable_then(task, continuation);
+    async::task<int&> task{ task_value_co_await_then<never_ready_awaitable_void, decltype(continuation), int&>(
+        never_ready_awaitable_void{}, continuation, unusedValue) };
 
     // Assert
     REQUIRE(!run);
@@ -588,11 +594,12 @@ TEST_CASE("task<T&>.await_suspend() runs continuation when task completes")
     callback_thread callbackThread{};
     int unusedStorage{ 123 };
     int& unusedValue{ unusedStorage };
-    async::task<int&> task{ task_value_co_return_co_await(
-        suspend_to_paused_callback_thread_awaitable_value<int&>{ callbackThread, unusedValue }) };
     async::event_signal done{};
-    auto continuation = [&done](async::awaitable_result<int&>) { done.set(); };
-    async::awaitable_then(task, continuation);
+    auto continuation = [&done]() { done.set(); };
+    async::task<int&> task{
+        task_value_co_await_then<suspend_to_paused_callback_thread_awaitable_void, decltype(continuation), int&>(
+            suspend_to_paused_callback_thread_awaitable_void{ callbackThread }, continuation, unusedValue)
+    };
 
     // Act
     callbackThread.resume();
@@ -609,15 +616,15 @@ TEST_CASE("task<T&>.await_suspend() does not run continuation before leaving cor
     callback_thread callbackThread{};
     int unusedStorage{ 123 };
     int& unusedValue{ unusedStorage };
-    async::task<int&> task{ task_value_co_return_co_await_with_scope(
-        scopeDestroyed, suspend_to_paused_callback_thread_awaitable_value<int&>{ callbackThread, unusedValue }) };
     async::event_signal done{};
-    auto continuation = [&scopeDestroyed, &scopeDestroyedDuringCompletion, &done](async::awaitable_result<int&>)
+    auto continuation = [&scopeDestroyed, &scopeDestroyedDuringCompletion, &done]()
     {
         scopeDestroyedDuringCompletion = scopeDestroyed;
         done.set();
     };
-    async::awaitable_then(task, continuation);
+    async::task<int&> task{ task_value_co_await_with_scope_then<suspend_to_paused_callback_thread_awaitable_void,
+        decltype(continuation), int&>(scopeDestroyed,
+        suspend_to_paused_callback_thread_awaitable_void{ callbackThread }, continuation, unusedValue) };
 
     // Act
     callbackThread.resume();
