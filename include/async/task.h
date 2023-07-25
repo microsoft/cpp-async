@@ -20,7 +20,7 @@ namespace async::details
         atomic_acq_rel<void*> stateOrCompletion;
         awaitable_result<T> result;
 
-        constexpr static std::shared_ptr<task_state> create_shared() noexcept
+        static std::shared_ptr<task_state> create_shared() noexcept
         {
             std::shared_ptr<task_state> result{ std::make_shared<task_state>() };
             result->stateOrCompletion = result->running_state();
@@ -78,7 +78,7 @@ namespace async
 
         using promise_type = details::task_promise_type<T>;
 
-        [[nodiscard]] constexpr bool await_ready() const noexcept
+        [[nodiscard]] bool await_ready() const noexcept
         {
             void* currentStateOrCompletion{ m_state->stateOrCompletion };
 
@@ -86,7 +86,7 @@ namespace async
                    currentStateOrCompletion == m_state->done_state();
         }
 
-        [[nodiscard]] constexpr bool await_suspend(std::coroutine_handle<> handle) const
+        [[nodiscard]] bool await_suspend(std::coroutine_handle<> handle) const
         {
             void* handleAddress{ handle.address() };
 
@@ -115,7 +115,7 @@ namespace async
             return true;
         }
 
-        [[nodiscard]] constexpr T await_resume() const
+        [[nodiscard]] T await_resume() const
         {
             void* currentStateOrCompletion{ m_state->ready_state() };
 
@@ -144,7 +144,7 @@ namespace async
 namespace async::details
 {
     template<typename T>
-    constexpr std::coroutine_handle<> get_completion(const std::weak_ptr<task_state<T>>& state)
+    std::coroutine_handle<> get_completion(const std::weak_ptr<task_state<T>>& state)
     {
         std::shared_ptr<task_state<T>> sharedState{ state.lock() };
 
@@ -162,7 +162,7 @@ namespace async::details
     }
 
     template<typename T>
-    constexpr void run_completion_if_exists(const std::weak_ptr<task_state<T>>& state)
+    void run_completion_if_exists(const std::weak_ptr<task_state<T>>& state)
     {
         std::coroutine_handle<> possibleCompletion{ get_completion(state) };
 
@@ -175,7 +175,7 @@ namespace async::details
     template<typename T>
     struct task_promise_type final
     {
-        constexpr task<T> get_return_object() noexcept
+        task<T> get_return_object() noexcept
         {
             std::shared_ptr<task_state<T>> state{ task_state<T>::create_shared() };
             m_state = std::weak_ptr{ state };
@@ -184,13 +184,13 @@ namespace async::details
 
         constexpr std::suspend_never initial_suspend() const noexcept { return {}; }
 
-        constexpr std::suspend_never final_suspend() const noexcept
+        std::suspend_never final_suspend() const noexcept
         {
             run_completion_if_exists(m_state);
             return {};
         }
 
-        constexpr void unhandled_exception() const noexcept
+        void unhandled_exception() const noexcept
         {
             std::shared_ptr<task_state<T>> state{ m_state.lock() };
 
@@ -200,7 +200,7 @@ namespace async::details
             }
         }
 
-        constexpr void return_value(T value) const noexcept
+        void return_value(T value) const noexcept
         {
             std::shared_ptr<task_state<T>> state{ m_state.lock() };
 
@@ -226,7 +226,7 @@ namespace async::details
 
         constexpr std::suspend_never initial_suspend() const noexcept { return {}; }
 
-        constexpr std::suspend_never final_suspend() const noexcept
+        std::suspend_never final_suspend() const noexcept
         {
             run_completion_if_exists(m_state);
             return {};
