@@ -54,7 +54,7 @@ inline /*<some_awaitable_type>*/ read_file_async()
 int main()
 {
     async::event_signal done{};
-    async::awaitable_then(read_file_async(), [&done](awaitable_result<std::string> result)
+    async::awaitable_then(read_file_async(), [&done](async::awaitable_result<std::string> result)
         {
             printf("%s\n", result().c_str());
             done.set();
@@ -73,7 +73,7 @@ inline /*<some_awaitable_type>*/ read_file_async()
 std::future<std::string> read_file_future()
 {
     std::shared_ptr<std::promise<std::string>> promise{ std::make_shared<std::promise<std::string>>() };
-    async::awaitable_then(read_file_async(), [promise](awaitable_result<std::string> result)
+    async::awaitable_then(read_file_async(), [promise](async::awaitable_result<std::string> result)
         {
             try
             {
