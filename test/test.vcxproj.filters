@@ -33,6 +33,9 @@
     <ClCompile Include="to_future_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="task_canceled_tests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="awaitable_reference_value.h">

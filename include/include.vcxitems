@@ -21,6 +21,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)async\awaitable_then.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)async\event_signal.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)async\task.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)async\task_canceled.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)async\task_completion_source.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)async\to_future.h" />
   </ItemGroup>

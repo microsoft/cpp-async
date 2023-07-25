@@ -33,5 +33,8 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)async\to_future.h">
       <Filter>async</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)async\task_canceled.h">
+      <Filter>async</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
