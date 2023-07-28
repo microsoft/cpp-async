@@ -5,7 +5,7 @@
 #include <cassert>
 #include <coroutine>
 
-template<typename T>
+template <typename T>
 struct awaitable_value_non_member_operator_co_await final
 {
     explicit awaitable_value_non_member_operator_co_await(T value) : m_value{ std::move(value) } {}
@@ -34,7 +34,7 @@ private:
     T m_value;
 };
 
-template<typename T>
+template <typename T>
 typename awaitable_value_non_member_operator_co_await<T>::awaitable operator co_await(
     awaitable_value_non_member_operator_co_await<T>&& value)
 {

@@ -6,7 +6,7 @@
 #include <coroutine>
 #include <memory>
 
-template<typename T>
+template <typename T>
 struct awaitable_value final
 {
     explicit awaitable_value(T value) noexcept : m_value{ std::move(value) } {}

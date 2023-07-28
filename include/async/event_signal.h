@@ -26,14 +26,14 @@ namespace async
             m_condition.wait(mutexLock, [this]() { return m_signaled.load(); });
         }
 
-        template<typename Rep, typename Period>
+        template <typename Rep, typename Period>
         bool wait_for(const std::chrono::duration<Rep, Period>& rel_time) const
         {
             std::unique_lock<std::mutex> mutexLock{ m_mutex };
             return m_condition.wait_for(mutexLock, rel_time, [this]() { return m_signaled.load(); });
         }
 
-        template<typename Rep, typename Period>
+        template <typename Rep, typename Period>
         void wait_for_or_throw(const std::chrono::duration<Rep, Period>& rel_time) const
         {
             if (!wait_for(rel_time))

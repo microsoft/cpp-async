@@ -6,7 +6,7 @@
 #include <coroutine>
 #include <memory>
 
-template<typename T>
+template <typename T>
 struct awaitable_reference_value final
 {
     explicit awaitable_reference_value(T& value) noexcept : m_value{ value } {}

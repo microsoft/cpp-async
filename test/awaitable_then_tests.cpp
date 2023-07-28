@@ -29,7 +29,8 @@ TEST_CASE("awaitable_then<void> waits until resume from suspension to run comple
     auto awaitable = awaitable_void_resume_spy(callbackThread, waited);
     async::details::atomic_acq_rel<bool> continued{ false };
     async::event_signal done{};
-    auto continuation = [&callbackThread, &waited, &continued, &done](async::awaitable_result<void>) {
+    auto continuation = [&callbackThread, &waited, &continued, &done](async::awaitable_result<void>)
+    {
         if (callbackThread.is_this_thread() && waited.load())
         {
             continued = true;
@@ -64,7 +65,8 @@ TEST_CASE("awaitable_then<void> awaitable result throws if awaitable throws")
     std::exception_ptr thrown{ std::make_exception_ptr(expected) };
     std::exception_ptr actual{};
     async::event_signal done{};
-    auto continuation = [&actual, &done](async::awaitable_result<void> result) {
+    auto continuation = [&actual, &done](async::awaitable_result<void> result)
+    {
         try
         {
             result();
@@ -90,7 +92,8 @@ TEST_CASE("awaitable_then<void> awaitable result does not throw if awaitable doe
     // Arrange
     std::exception_ptr actual{};
     async::event_signal done{};
-    auto continuation = [&actual, &done](async::awaitable_result<void> result) {
+    auto continuation = [&actual, &done](async::awaitable_result<void> result)
+    {
         try
         {
             result();
@@ -120,7 +123,8 @@ TEST_CASE("awaitable_then<T> waits until resume from suspension to run completio
     auto awaitable = awaitable_value_resume_spy(callbackThread, waited, unusedValue);
     async::details::atomic_acq_rel<bool> continued{ false };
     async::event_signal done{};
-    auto continuation = [&callbackThread, &waited, &continued, &done](async::awaitable_result<bool>) {
+    auto continuation = [&callbackThread, &waited, &continued, &done](async::awaitable_result<bool>)
+    {
         if (callbackThread.is_this_thread() && waited.load())
         {
             continued = true;
@@ -144,7 +148,8 @@ TEST_CASE("awaitable_then<T> awaitable result throws if awaitable throws")
     std::exception_ptr thrown{ std::make_exception_ptr(expected) };
     std::exception_ptr actual{};
     async::event_signal done{};
-    auto continuation = [&actual, &done](async::awaitable_result<bool> result) {
+    auto continuation = [&actual, &done](async::awaitable_result<bool> result)
+    {
         try
         {
             result();
@@ -174,7 +179,8 @@ TEST_CASE("awaitable_then<T> awaitable result returns value")
     std::unique_ptr<std::string_view> actual{};
     async::event_signal done{};
     auto awaitable = awaitable_value(std::move(verifyMoveOnlyTypeWorksAtCompileTime));
-    auto continuation = [&actual, &done](async::awaitable_result<std::unique_ptr<std::string_view>> result) {
+    auto continuation = [&actual, &done](async::awaitable_result<std::unique_ptr<std::string_view>> result)
+    {
         actual = std::move(result());
         done.set();
     };
@@ -197,7 +203,8 @@ TEST_CASE("awaitable_then<T&> waits until resume from suspension to run completi
     auto awaitable = awaitable_value_resume_spy<bool&>(callbackThread, waited, unusedValue);
     async::details::atomic_acq_rel<bool> continued{ false };
     async::event_signal done{};
-    auto continuation = [&callbackThread, &waited, &continued, &done](async::awaitable_result<bool&>) {
+    auto continuation = [&callbackThread, &waited, &continued, &done](async::awaitable_result<bool&>)
+    {
         if (callbackThread.is_this_thread() && waited.load())
         {
             continued = true;
@@ -221,7 +228,8 @@ TEST_CASE("awaitable_then<T&> awaitable result throws if awaitable throws")
     std::exception_ptr thrown{ std::make_exception_ptr(expected) };
     std::exception_ptr actual{};
     async::event_signal done{};
-    auto continuation = [&actual, &done](async::awaitable_result<bool&> result) {
+    auto continuation = [&actual, &done](async::awaitable_result<bool&> result)
+    {
         try
         {
             result();
@@ -250,7 +258,8 @@ TEST_CASE("awaitable_then<T&> awaitable result returns value")
     int* actual{};
     async::event_signal done{};
     auto awaitable = awaitable_reference_value(expected);
-    auto continuation = [&actual, &done](async::awaitable_result<int&> result) {
+    auto continuation = [&actual, &done](async::awaitable_result<int&> result)
+    {
         actual = &result();
         done.set();
     };
@@ -271,7 +280,8 @@ TEST_CASE("awaitable_then<T{!has_default_ctor}> awaitable result returns value")
     std::unique_ptr<no_default_constructor_move_only> actual{};
     async::event_signal done{};
     auto awaitable = awaitable_value(no_default_constructor_move_only{ expected });
-    auto continuation = [&actual, &done](async::awaitable_result<no_default_constructor_move_only> result) {
+    auto continuation = [&actual, &done](async::awaitable_result<no_default_constructor_move_only> result)
+    {
         actual = std::make_unique<no_default_constructor_move_only>(result());
         done.set();
     };
@@ -291,7 +301,8 @@ TEST_CASE("awaitable_then<T w/member operator co_await> awaitable result returns
     int actual{};
     async::event_signal done{};
     auto awaitable = awaitable_value_member_operator_co_await{ expected };
-    auto continuation = [&actual, &done](async::awaitable_result<int> result) {
+    auto continuation = [&actual, &done](async::awaitable_result<int> result)
+    {
         actual = result();
         done.set();
     };
@@ -311,7 +322,8 @@ TEST_CASE("awaitable_then<T w/non-member operator co_await> awaitable result ret
     int actual{};
     async::event_signal done{};
     auto awaitable = awaitable_value_non_member_operator_co_await{ expected };
-    auto continuation = [&actual, &done](async::awaitable_result<int> result) {
+    auto continuation = [&actual, &done](async::awaitable_result<int> result)
+    {
         actual = result();
         done.set();
     };

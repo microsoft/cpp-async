@@ -6,7 +6,7 @@
 #include <coroutine>
 #include <exception>
 
-template<typename T>
+template <typename T>
 struct awaitable_value_throws final
 {
     explicit awaitable_value_throws(std::exception_ptr exception) noexcept : m_exception{ exception } {}

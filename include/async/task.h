@@ -11,10 +11,10 @@
 
 namespace async::details
 {
-    template<typename T>
+    template <typename T>
     struct task_promise_type;
 
-    template<typename T>
+    template <typename T>
     struct task_state final
     {
         atomic_acq_rel<void*> stateOrCompletion;
@@ -65,13 +65,13 @@ namespace async::details
         }
     };
 
-    template<typename T>
+    template <typename T>
     struct task_promise_type;
 }
 
 namespace async
 {
-    template<typename T>
+    template <typename T>
     struct task final
     {
         explicit task(const std::shared_ptr<details::task_state<T>>& state) : m_state{ state } {}
@@ -143,7 +143,7 @@ namespace async
 
 namespace async::details
 {
-    template<typename T>
+    template <typename T>
     std::coroutine_handle<> get_completion(const std::weak_ptr<task_state<T>>& state)
     {
         std::shared_ptr<task_state<T>> sharedState{ state.lock() };
@@ -161,7 +161,7 @@ namespace async::details
         return std::coroutine_handle<>{};
     }
 
-    template<typename T>
+    template <typename T>
     void run_completion_if_exists(const std::weak_ptr<task_state<T>>& state)
     {
         std::coroutine_handle<> possibleCompletion{ get_completion(state) };
@@ -172,7 +172,7 @@ namespace async::details
         }
     }
 
-    template<typename T>
+    template <typename T>
     struct task_promise_type final
     {
         task<T> get_return_object() noexcept
@@ -214,7 +214,7 @@ namespace async::details
         std::weak_ptr<task_state<T>> m_state;
     };
 
-    template<>
+    template <>
     struct task_promise_type<void> final
     {
         task<void> get_return_object() noexcept

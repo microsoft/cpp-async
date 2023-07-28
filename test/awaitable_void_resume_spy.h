@@ -11,7 +11,8 @@ struct awaitable_void_resume_spy final
 {
     explicit awaitable_void_resume_spy(callback_thread& thread, async::details::atomic_acq_rel<bool>& waited) :
         m_thread{ thread }, m_waited{ waited }
-    {}
+    {
+    }
 
     [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
 

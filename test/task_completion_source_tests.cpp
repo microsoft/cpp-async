@@ -41,7 +41,8 @@ namespace
             co_await std::move(awaitable);
         }
         catch (...)
-        {}
+        {
+        }
 
         done.set();
     }
@@ -82,9 +83,7 @@ TEST_CASE("task_completion_source<void>.set_value() throws if called a second ti
     promise.set_value();
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        promise.set_value(),
-        std::runtime_error,
+    REQUIRE_THROWS_MATCHES(promise.set_value(), std::runtime_error,
         Catch::Matchers::Message("The task_completion_source<T> has already been completed."));
 }
 
@@ -174,9 +173,7 @@ TEST_CASE("task_completion_source<void>.set_exception() throws if the exception_
     std::exception_ptr empty{};
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        promise.set_exception(empty),
-        std::invalid_argument,
+    REQUIRE_THROWS_MATCHES(promise.set_exception(empty), std::invalid_argument,
         Catch::Matchers::Message("The exception_ptr must not be empty."));
 }
 
@@ -233,9 +230,7 @@ TEST_CASE("task_completion_source<void>.set_exception() throws if called a secon
     promise.set_exception(exception);
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        promise.set_exception(exception),
-        std::runtime_error,
+    REQUIRE_THROWS_MATCHES(promise.set_exception(exception), std::runtime_error,
         Catch::Matchers::Message("The task_completion_source<T> has already been completed."));
 }
 
@@ -365,7 +360,7 @@ TEST_CASE("task_completion_source<T>.set_value() makes its task ready")
 
 namespace
 {
-    template<typename T>
+    template <typename T>
     async::task<void> co_await_value_finally_set_signal(async::task<T>&& awaitable, async::event_signal& done)
     {
         try
@@ -373,7 +368,8 @@ namespace
             (void)(co_await std::move(awaitable));
         }
         catch (...)
-        {}
+        {
+        }
 
         done.set();
     }
@@ -417,9 +413,7 @@ TEST_CASE("task_completion_source<T>.set_value() throws if called a second time.
     promise.set_value(value);
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        promise.set_value(value),
-        std::runtime_error,
+    REQUIRE_THROWS_MATCHES(promise.set_value(value), std::runtime_error,
         Catch::Matchers::Message("The task_completion_source<T> has already been completed."));
 }
 
@@ -514,9 +508,7 @@ TEST_CASE("task_completion_source<T>.set_exception() throws if the exception_ptr
     std::exception_ptr empty{};
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        promise.set_exception(empty),
-        std::invalid_argument,
+    REQUIRE_THROWS_MATCHES(promise.set_exception(empty), std::invalid_argument,
         Catch::Matchers::Message("The exception_ptr must not be empty."));
 }
 
@@ -573,9 +565,7 @@ TEST_CASE("task_completion_source<T>.set_exception() throws if called a second t
     promise.set_exception(exception);
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        promise.set_exception(exception),
-        std::runtime_error,
+    REQUIRE_THROWS_MATCHES(promise.set_exception(exception), std::runtime_error,
         Catch::Matchers::Message("The task_completion_source<T> has already been completed."));
 }
 
@@ -747,9 +737,7 @@ TEST_CASE("task_completion_source<T&>.set_value() throws if called a second time
     promise.set_value(value);
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        promise.set_value(value),
-        std::runtime_error,
+    REQUIRE_THROWS_MATCHES(promise.set_value(value), std::runtime_error,
         Catch::Matchers::Message("The task_completion_source<T> has already been completed."));
 }
 
@@ -851,9 +839,7 @@ TEST_CASE("task_completion_source<T&>.set_exception() throws if the exception_pt
     std::exception_ptr empty{};
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        promise.set_exception(empty),
-        std::invalid_argument,
+    REQUIRE_THROWS_MATCHES(promise.set_exception(empty), std::invalid_argument,
         Catch::Matchers::Message("The exception_ptr must not be empty."));
 }
 
@@ -910,9 +896,7 @@ TEST_CASE("task_completion_source<T&>.set_exception() throws if called a second 
     promise.set_exception(exception);
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        promise.set_exception(exception),
-        std::runtime_error,
+    REQUIRE_THROWS_MATCHES(promise.set_exception(exception), std::runtime_error,
         Catch::Matchers::Message("The task_completion_source<T> has already been completed."));
 }
 
@@ -1047,11 +1031,11 @@ namespace
     struct move_only_signal_and_black_on_move final
     {
         explicit move_only_signal_and_black_on_move(
-            async::event_signal& moving,
-            async::event_signal& resume,
-            async::event_signal& done) :
-            m_moving{ moving }, m_resume{ resume }, m_done{ done }
-        {}
+            async::event_signal& moving, async::event_signal& resume, async::event_signal& done) :
+            m_moving{ moving },
+            m_resume{ resume }, m_done{ done }
+        {
+        }
 
         move_only_signal_and_black_on_move(const move_only_signal_and_black_on_move&) = delete;
 

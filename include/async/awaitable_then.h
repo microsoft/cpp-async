@@ -21,7 +21,7 @@ namespace async::details
         };
     };
 
-    template<typename T, typename Awaitable, typename Continuation>
+    template <typename T, typename Awaitable, typename Continuation>
     struct then_task_factory final
     {
         static then_task create(Awaitable awaitable, Continuation continuation)
@@ -42,7 +42,7 @@ namespace async::details
         }
     };
 
-    template<typename Awaitable, typename Continuation>
+    template <typename Awaitable, typename Continuation>
     struct then_task_factory<void, Awaitable, Continuation> final
     {
         static then_task create(Awaitable awaitable, Continuation continuation)
@@ -66,7 +66,7 @@ namespace async::details
 
 namespace async
 {
-    template<typename Awaitable, typename Continuation>
+    template <typename Awaitable, typename Continuation>
     inline void awaitable_then(Awaitable awaitable, Continuation continuation)
     {
         using T = awaitable_resume_t<Awaitable>;

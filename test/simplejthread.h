@@ -9,10 +9,11 @@ struct simplejthread
 {
     simplejthread() noexcept : m_inner{} {}
 
-    template<typename Function, typename... Args>
+    template <typename Function, typename... Args>
     explicit simplejthread(Function&& function, Args&&... args) :
         m_inner{ std::forward<Function&&>(function), std::forward<Args&&>(args)... }
-    {}
+    {
+    }
 
     simplejthread(const simplejthread&) = delete;
 

@@ -10,10 +10,10 @@
 
 namespace async::details
 {
-    template<typename T>
+    template <typename T>
     struct get_task_promise;
 
-    template<typename T>
+    template <typename T>
     struct get_task final
     {
         using promise_type = get_task_promise<T>;
@@ -48,7 +48,7 @@ namespace async::details
         event_signal& m_done;
     };
 
-    template<typename T>
+    template <typename T>
     struct get_task_promise final
     {
         get_task_promise() : m_result{}, m_done{} {}
@@ -77,7 +77,7 @@ namespace async::details
         event_signal m_done;
     };
 
-    template<>
+    template <>
     struct get_task_promise<void> final
     {
         get_task<void> get_return_object()
@@ -108,7 +108,7 @@ namespace async::details
         event_signal m_done;
     };
 
-    template<typename T>
+    template <typename T>
     T get_task<T>::get() const
     {
         return m_handle.promise().get();
@@ -117,7 +117,7 @@ namespace async::details
 
 namespace async
 {
-    template<typename Awaitable>
+    template <typename Awaitable>
     inline awaitable_resume_t<Awaitable> awaitable_get(Awaitable awaitable)
     {
         using T = awaitable_resume_t<Awaitable>;

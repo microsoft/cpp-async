@@ -5,7 +5,7 @@
 #include <cassert>
 #include <coroutine>
 
-template<typename T>
+template <typename T>
 struct awaitable_value_member_operator_co_await final
 {
     explicit awaitable_value_member_operator_co_await(T value) : m_value{ std::move(value) } {}
