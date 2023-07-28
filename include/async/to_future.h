@@ -20,7 +20,7 @@ namespace async::details
         };
     };
 
-    template<typename T, typename Awaitable>
+    template <typename T, typename Awaitable>
     struct to_future_factory final
     {
         static to_future_task create(Awaitable awaitable, std::future<T>& future)
@@ -41,7 +41,7 @@ namespace async::details
         }
     };
 
-    template<typename Awaitable>
+    template <typename Awaitable>
     struct to_future_factory<void, Awaitable> final
     {
         static to_future_task create(Awaitable awaitable, std::future<void>& future)
@@ -76,7 +76,7 @@ namespace async::details
 
 namespace async
 {
-    template<typename Awaitable>
+    template <typename Awaitable>
     std::future<awaitable_resume_t<Awaitable>> to_future(Awaitable awaitable)
     {
         using T = awaitable_resume_t<Awaitable>;

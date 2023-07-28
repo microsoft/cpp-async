@@ -8,7 +8,7 @@
 
 namespace async
 {
-    template<typename T>
+    template <typename T>
     struct awaitable_result final
     {
         constexpr awaitable_result() noexcept : m_storageType{ result_union_type::unset }, m_storage{} {}
@@ -90,7 +90,7 @@ namespace async
 
         union result_union
         {
-#pragma prefast(suppress:26495, "Do not default-initialize in a union.")
+#pragma prefast(suppress : 26495, "Do not default-initialize in a union.")
             constexpr result_union() noexcept {}
             ~result_union() noexcept {}
 
@@ -109,7 +109,7 @@ namespace async
         result_union m_storage;
     };
 
-    template<>
+    template <>
     struct awaitable_result<void> final
     {
         awaitable_result() noexcept : m_exception{} {}

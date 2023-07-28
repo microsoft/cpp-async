@@ -42,9 +42,7 @@ TEST_CASE("awaitable_get<void> throws if awaitable throws")
     std::exception_ptr actual{};
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        async::awaitable_get(awaitable_void_throws{ thrown }),
-        std::runtime_error,
+    REQUIRE_THROWS_MATCHES(async::awaitable_get(awaitable_void_throws{ thrown }), std::runtime_error,
         Catch::Matchers::Message(expected.what()));
 }
 
@@ -71,9 +69,7 @@ TEST_CASE("awaitable_get<T> throws if awaitable throws")
     std::exception_ptr actual{};
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        async::awaitable_get(awaitable_value_throws<bool>{ thrown }),
-        std::runtime_error,
+    REQUIRE_THROWS_MATCHES(async::awaitable_get(awaitable_value_throws<bool>{ thrown }), std::runtime_error,
         Catch::Matchers::Message(expected.what()));
 }
 
@@ -116,9 +112,7 @@ TEST_CASE("awaitable_get<T&> throws if awaitable throws")
     std::exception_ptr actual{};
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        async::awaitable_get(awaitable_value_throws<bool&>{ thrown }),
-        std::runtime_error,
+    REQUIRE_THROWS_MATCHES(async::awaitable_get(awaitable_value_throws<bool&>{ thrown }), std::runtime_error,
         Catch::Matchers::Message(expected.what()));
 }
 

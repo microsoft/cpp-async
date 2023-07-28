@@ -9,7 +9,7 @@ namespace async::details
     // Like std::atomic, but defaults to std::memory_order::memory_order_acq_rel (or memory_order_acquire or
     // memory_order_release, as appropriate) rather than memory_order_seq_cst.
     // Does not include some parts of std::atomic not currently used by callers.
-    template<typename T>
+    template <typename T>
     struct atomic_acq_rel final
     {
         atomic_acq_rel() noexcept = default;

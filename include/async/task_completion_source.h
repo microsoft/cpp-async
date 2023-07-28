@@ -15,16 +15,17 @@ namespace async::details
         set
     };
 
-    template<typename T>
+    template <typename T>
     struct task_completion_source_core final
     {
         task_completion_source_core() :
             m_taskState{ task_state<T>::create_shared() }, m_completionState{ task_completion_state::unset }
-        {}
+        {
+        }
 
         task<T> task() const noexcept { return ::async::task<T>{ m_taskState }; }
 
-        template<typename... Args>
+        template <typename... Args>
         void set_value(Args&&... args)
         {
             if (!try_set_value(args...))
@@ -33,7 +34,7 @@ namespace async::details
             }
         }
 
-        template<typename... Args>
+        template <typename... Args>
         [[nodiscard]] bool try_set_value(Args&&... args)
         {
             task_completion_state expected{ task_completion_state::unset };
@@ -122,7 +123,7 @@ namespace async::details
 
 namespace async
 {
-    template<typename T>
+    template <typename T>
     struct task_completion_source final
     {
         task<T> task() const noexcept { return m_core.task(); }
@@ -142,7 +143,7 @@ namespace async
         details::task_completion_source_core<T> m_core;
     };
 
-    template<>
+    template <>
     struct task_completion_source<void> final
     {
         task<void> task() const noexcept { return m_core.task(); }

@@ -45,7 +45,7 @@ namespace
         }
     };
 
-    template<typename Awaitable>
+    template <typename Awaitable>
     async::task<void> task_void_co_await(Awaitable awaitable)
     {
         co_await awaitable;
@@ -109,7 +109,8 @@ namespace
     struct suspend_to_paused_callback_thread_awaitable_void final
     {
         explicit suspend_to_paused_callback_thread_awaitable_void(callback_thread& thread) noexcept : m_thread{ thread }
-        {}
+        {
+        }
 
         [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
 
@@ -150,7 +151,7 @@ namespace
         bool& m_destroyed;
     };
 
-    template<typename Awaitable>
+    template <typename Awaitable>
     async::task<void> task_void_co_return_co_await_with_scope(bool& scopeDestroyed, Awaitable awaitable)
     {
         scope_spy destroyBeforeContinue{ scopeDestroyed };
@@ -168,7 +169,8 @@ TEST_CASE("task<void>.await_suspend() does not run continuation before leaving c
     async::task<void> task{ task_void_co_return_co_await_with_scope(
         scopeDestroyed, suspend_to_paused_callback_thread_awaitable_void{ callbackThread }) };
     async::event_signal done{};
-    auto continuation = [&scopeDestroyed, &scopeDestroyedDuringCompletion, &done](async::awaitable_result<void>) {
+    auto continuation = [&scopeDestroyed, &scopeDestroyedDuringCompletion, &done](async::awaitable_result<void>)
+    {
         scopeDestroyedDuringCompletion = scopeDestroyed;
         done.set();
     };
@@ -201,9 +203,7 @@ TEST_CASE("task<void>.await_suspend() throws if another continuation is present"
     std::noop_coroutine_handle handle{ std::noop_coroutine() };
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        task.await_suspend(handle),
-        std::runtime_error,
+    REQUIRE_THROWS_MATCHES(task.await_suspend(handle), std::runtime_error,
         Catch::Matchers::Message("task<T> may be co_awaited (or have await_suspend() used) only once."));
 }
 
@@ -237,9 +237,7 @@ TEST_CASE("task<void>.await_resume() throws when called before completion")
     }
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        task.await_resume(),
-        std::runtime_error,
+    REQUIRE_THROWS_MATCHES(task.await_resume(), std::runtime_error,
         Catch::Matchers::Message("task<T>.await_resume() may not be called before await_ready() returns true."));
 }
 
@@ -256,15 +254,13 @@ TEST_CASE("task<void>.await_resume() throws when called a second time")
     task.await_resume();
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        task.await_resume(),
-        std::runtime_error,
+    REQUIRE_THROWS_MATCHES(task.await_resume(), std::runtime_error,
         Catch::Matchers::Message("task<T> may be co_awaited (or have await_resume() used) only once."));
 }
 
 namespace
 {
-    template<typename T>
+    template <typename T>
     async::task<T> task_value_co_return(T value)
     {
         co_return value;
@@ -286,7 +282,7 @@ TEST_CASE("task<T>.await_ready() returns true when task does not suspend")
 
 namespace
 {
-    template<typename T>
+    template <typename T>
     struct never_ready_awaitable_value final
     {
         [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
@@ -300,7 +296,7 @@ namespace
         }
     };
 
-    template<typename Awaitable>
+    template <typename Awaitable>
     auto task_value_co_return_co_await(Awaitable awaitable) -> async::task<decltype(awaitable.await_resume())>
     {
         co_return co_await awaitable;
@@ -362,12 +358,13 @@ TEST_CASE("task<T>.await_suspend() does not run continuation when task is suspen
 
 namespace
 {
-    template<typename T>
+    template <typename T>
     struct suspend_to_paused_callback_thread_awaitable_value final
     {
         explicit suspend_to_paused_callback_thread_awaitable_value(callback_thread& thread, T value) noexcept :
             m_thread{ thread }, m_value{ value }
-        {}
+        {
+        }
 
         [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
 
@@ -401,7 +398,7 @@ TEST_CASE("task<T>.await_suspend() runs continuation when task completes")
 
 namespace
 {
-    template<typename Awaitable>
+    template <typename Awaitable>
     auto task_value_co_return_co_await_with_scope(bool& scopeDestroyed, Awaitable awaitable)
         -> async::task<decltype(awaitable.await_resume())>
     {
@@ -420,7 +417,8 @@ TEST_CASE("task<T>.await_suspend() does not run continuation before leaving coro
     async::task<int> task{ task_value_co_return_co_await_with_scope(
         scopeDestroyed, suspend_to_paused_callback_thread_awaitable_value{ callbackThread, unusedValue }) };
     async::event_signal done{};
-    auto continuation = [&scopeDestroyed, &scopeDestroyedDuringCompletion, &done](async::awaitable_result<int>) {
+    auto continuation = [&scopeDestroyed, &scopeDestroyedDuringCompletion, &done](async::awaitable_result<int>)
+    {
         scopeDestroyedDuringCompletion = scopeDestroyed;
         done.set();
     };
@@ -453,9 +451,7 @@ TEST_CASE("task<T>.await_suspend() throws if another continuation is present")
     std::noop_coroutine_handle handle{ std::noop_coroutine() };
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        task.await_suspend(handle),
-        std::runtime_error,
+    REQUIRE_THROWS_MATCHES(task.await_suspend(handle), std::runtime_error,
         Catch::Matchers::Message("task<T> may be co_awaited (or have await_suspend() used) only once."));
 }
 
@@ -493,9 +489,7 @@ TEST_CASE("task<T>.await_resume() throws when called before completion")
     }
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        task.await_resume(),
-        std::runtime_error,
+    REQUIRE_THROWS_MATCHES(task.await_resume(), std::runtime_error,
         Catch::Matchers::Message("task<T>.await_resume() may not be called before await_ready() returns true."));
 }
 
@@ -516,9 +510,7 @@ TEST_CASE("task<T>.await_resume() throws when called a second time")
     }
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        task.await_resume(),
-        std::runtime_error,
+    REQUIRE_THROWS_MATCHES(task.await_resume(), std::runtime_error,
         Catch::Matchers::Message("task<T> may be co_awaited (or have await_resume() used) only once."));
 }
 
@@ -620,7 +612,8 @@ TEST_CASE("task<T&>.await_suspend() does not run continuation before leaving cor
     async::task<int&> task{ task_value_co_return_co_await_with_scope(
         scopeDestroyed, suspend_to_paused_callback_thread_awaitable_value<int&>{ callbackThread, unusedValue }) };
     async::event_signal done{};
-    auto continuation = [&scopeDestroyed, &scopeDestroyedDuringCompletion, &done](async::awaitable_result<int&>) {
+    auto continuation = [&scopeDestroyed, &scopeDestroyedDuringCompletion, &done](async::awaitable_result<int&>)
+    {
         scopeDestroyedDuringCompletion = scopeDestroyed;
         done.set();
     };
@@ -653,9 +646,7 @@ TEST_CASE("task<T&>.await_suspend() throws if another continuation is present")
     std::noop_coroutine_handle handle{ std::noop_coroutine() };
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        task.await_suspend(handle),
-        std::runtime_error,
+    REQUIRE_THROWS_MATCHES(task.await_suspend(handle), std::runtime_error,
         Catch::Matchers::Message("task<T> may be co_awaited (or have await_suspend() used) only once."));
 }
 
@@ -694,9 +685,7 @@ TEST_CASE("task<T&>.await_resume() throws when called before completion")
     }
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        task.await_resume(),
-        std::runtime_error,
+    REQUIRE_THROWS_MATCHES(task.await_resume(), std::runtime_error,
         Catch::Matchers::Message("task<T>.await_resume() may not be called before await_ready() returns true."));
 }
 
@@ -718,9 +707,7 @@ TEST_CASE("task<T&>.await_resume() throws when called a second time")
     }
 
     // Act & Assert
-    REQUIRE_THROWS_MATCHES(
-        task.await_resume(),
-        std::runtime_error,
+    REQUIRE_THROWS_MATCHES(task.await_resume(), std::runtime_error,
         Catch::Matchers::Message("task<T> may be co_awaited (or have await_resume() used) only once."));
 }
 
