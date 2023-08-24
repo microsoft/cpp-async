@@ -70,7 +70,7 @@ namespace async
             }
         }
 
-        void set_value(T value)
+        void set_value(T value) noexcept
         {
             new (std::addressof(m_storage.value)) possible_reference{ std::forward<T>(value) };
             m_storageType = result_union_type::value;

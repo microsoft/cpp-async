@@ -18,7 +18,7 @@ namespace async::details
     {
         using promise_type = get_task_promise<T>;
 
-        explicit get_task(std::coroutine_handle<get_task_promise<T>> handle) : m_handle{ handle } {}
+        explicit get_task(std::coroutine_handle<get_task_promise<T>> handle) noexcept : m_handle{ handle } {}
 
         get_task(const get_task&) = delete;
         get_task(get_task&&) noexcept = delete;
@@ -51,7 +51,7 @@ namespace async::details
     template <typename T>
     struct get_task_promise final
     {
-        get_task_promise() : m_result{}, m_done{} {}
+        get_task_promise() noexcept : m_result{}, m_done{} {}
 
         get_task<T> get_return_object()
         {

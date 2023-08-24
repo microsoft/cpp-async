@@ -28,14 +28,21 @@ namespace async::details
         template <typename... Args>
         void set_value(Args&&... args)
         {
-            if (!try_set_value(args...))
+            std::exception_ptr completionException{};
+
+            if (!try_set_value(completionException, args...))
             {
+                if (completionException)
+                {
+                    std::rethrow_exception(completionException);
+                }
+
                 throw std::runtime_error{ "The task_completion_source<T> has already been completed." };
             }
         }
 
         template <typename... Args>
-        [[nodiscard]] bool try_set_value(Args&&... args)
+        [[nodiscard]] bool try_set_value(std::exception_ptr& completionException, Args&&... args) noexcept
         {
             task_completion_state expected{ task_completion_state::unset };
 
@@ -44,18 +51,25 @@ namespace async::details
                 return false;
             }
 
-            try
-            {
-                m_taskState->result.set_value(std::forward<T>(args)...);
-            }
-            catch (...)
-            {
-                m_completionState = task_completion_state::unset;
-                throw;
-            }
-
+            m_taskState->result.set_value(std::forward<T>(args)...);
             m_completionState = task_completion_state::set;
-            complete();
+            return try_complete(completionException);
+        }
+
+        template <typename... Args>
+        [[nodiscard]] bool try_set_value_terminate_on_completion_exception(Args&&... args) noexcept
+        {
+            std::exception_ptr completionException{};
+
+            if (!try_set_value(completionException, args...))
+            {
+                if (completionException)
+                {
+                    std::terminate();
+                }
+
+                return false;
+            }
 
             return true;
         }
@@ -67,13 +81,21 @@ namespace async::details
                 throw std::invalid_argument{ "The exception_ptr must not be empty." };
             }
 
-            if (!try_set_exception(exception))
+            std::exception_ptr completionException{};
+
+            if (!try_set_exception(exception, completionException))
             {
+                if (completionException)
+                {
+                    std::rethrow_exception(completionException);
+                }
+
                 throw std::runtime_error{ "The task_completion_source<T> has already been completed." };
             }
         }
 
-        [[nodiscard]] bool try_set_exception(const std::exception_ptr& exception) noexcept
+        [[nodiscard]] bool try_set_exception(
+            const std::exception_ptr& exception, std::exception_ptr& completionException) noexcept
         {
             if (!exception)
             {
@@ -87,33 +109,51 @@ namespace async::details
                 return false;
             }
 
-            try
-            {
-                m_taskState->result.set_exception(exception);
-            }
-            catch (...)
-            {
-                m_completionState = task_completion_state::unset;
-                std::terminate();
-            }
-
+            m_taskState->result.set_exception(exception);
             m_completionState = task_completion_state::set;
-            complete();
+            return try_complete(completionException);
+        }
+
+        [[nodiscard]] bool try_set_exception_terminate_on_completion_exception(
+            const std::exception_ptr& exception) noexcept
+        {
+            std::exception_ptr completionException{};
+
+            if (!try_set_exception(exception, completionException))
+            {
+                if (completionException)
+                {
+                    std::terminate();
+                }
+
+                return false;
+            }
 
             return true;
         }
 
     private:
-        void complete() noexcept
+        bool try_complete(std::exception_ptr& exception) noexcept
         {
             assert(m_completionState.load() == task_completion_state::set);
+            exception = {};
 
             const std::coroutine_handle<> possibleCompletion{ m_taskState->mark_ready() };
 
             if (possibleCompletion)
             {
-                possibleCompletion();
+                try
+                {
+                    possibleCompletion();
+                }
+                catch (...)
+                {
+                    exception = std::current_exception();
+                    return false;
+                }
             }
+
+            return true;
         }
 
         std::shared_ptr<task_state<T>> m_taskState;
@@ -130,13 +170,33 @@ namespace async
 
         void set_value(T value) { m_core.set_value(value); }
 
-        [[nodiscard]] bool try_set_value(T value) noexcept { return m_core.try_set_value(value); };
+        ///
+        /// @deprecated Use try_set_value(T, std::exception_ptr&) instead.
+        ///
+        [[nodiscard]] bool try_set_value(T value) noexcept
+        {
+            return m_core.try_set_value_terminate_on_completion_exception(std::forward<T>(value));
+        }
+
+        [[nodiscard]] bool try_set_value(T value, std::exception_ptr& completionException) noexcept
+        {
+            return m_core.try_set_value(completionException, std::forward<T>(value));
+        }
 
         void set_exception(const std::exception_ptr& exception) { m_core.set_exception(exception); }
 
+        ///
+        /// @deprecated Use try_set_exception(const std::exception_ptr&, std::exception_ptr&) instead.
+        ///
         [[nodiscard]] bool try_set_exception(const std::exception_ptr& exception) noexcept
         {
-            return m_core.try_set_exception(exception);
+            return m_core.try_set_exception_terminate_on_completion_exception(exception);
+        }
+
+        [[nodiscard]] bool try_set_exception(
+            const std::exception_ptr& exception, std::exception_ptr& completionException) noexcept
+        {
+            return m_core.try_set_exception(exception, completionException);
         }
 
     private:
@@ -150,13 +210,30 @@ namespace async
 
         void set_value() { m_core.set_value(); }
 
-        [[nodiscard]] bool try_set_value() noexcept { return m_core.try_set_value(); };
+        ///
+        /// @deprecated Use try_set_value(std::exception_ptr&) instead.
+        ///
+        [[nodiscard]] bool try_set_value() noexcept { return m_core.try_set_value_terminate_on_completion_exception(); }
+
+        [[nodiscard]] bool try_set_value(std::exception_ptr& completionException) noexcept
+        {
+            return m_core.try_set_value(completionException);
+        }
 
         void set_exception(const std::exception_ptr& exception) { m_core.set_exception(exception); }
 
+        ///
+        /// @deprecated Use try_set_exception(const std::exception_ptr&, std::exception_ptr&) instead.
+        ///
         [[nodiscard]] bool try_set_exception(const std::exception_ptr& exception) noexcept
         {
-            return m_core.try_set_exception(exception);
+            return m_core.try_set_exception_terminate_on_completion_exception(exception);
+        }
+
+        [[nodiscard]] bool try_set_exception(
+            const std::exception_ptr& exception, std::exception_ptr& completionException) noexcept
+        {
+            return m_core.try_set_exception(exception, completionException);
         }
 
     private:
