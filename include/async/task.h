@@ -20,7 +20,7 @@ namespace async::details
         atomic_acq_rel<void*> stateOrCompletion;
         awaitable_result<T> result;
 
-        static std::shared_ptr<task_state> create_shared() noexcept
+        static std::shared_ptr<task_state> create_shared()
         {
             std::shared_ptr<task_state> result{ std::make_shared<task_state>() };
             result->stateOrCompletion = result->running_state();
@@ -42,7 +42,7 @@ namespace async::details
 
         [[nodiscard]] bool is_done() const noexcept { return stateOrCompletion == done_state(); }
 
-        [[nodiscard]] bool is_completion(void* value)
+        [[nodiscard]] bool is_completion(void* value) const noexcept
         {
             return value != running_state() && value != ready_state() && value != done_state();
         }
@@ -74,7 +74,7 @@ namespace async
     template <typename T>
     struct task final
     {
-        explicit task(const std::shared_ptr<details::task_state<T>>& state) : m_state{ state } {}
+        explicit task(const std::shared_ptr<details::task_state<T>>& state) noexcept : m_state{ state } {}
 
         using promise_type = details::task_promise_type<T>;
 
@@ -144,7 +144,7 @@ namespace async
 namespace async::details
 {
     template <typename T>
-    std::coroutine_handle<> get_completion(const std::weak_ptr<task_state<T>>& state)
+    std::coroutine_handle<> get_completion(const std::weak_ptr<task_state<T>>& state) noexcept
     {
         std::shared_ptr<task_state<T>> sharedState{ state.lock() };
 
@@ -162,12 +162,18 @@ namespace async::details
     }
 
     template <typename T>
-    void run_completion_if_exists(const std::weak_ptr<task_state<T>>& state)
+    void run_completion_if_exists(const std::weak_ptr<task_state<T>>& state) noexcept
     {
         const std::coroutine_handle<> possibleCompletion{ get_completion(state) };
 
         if (possibleCompletion)
         {
+            // This call is not technically noexcept; it could throw only if the coroutine has an unhandled exception
+            // and the call to its promise.unhandled_exception() itself throws. Because the C++20 standard requires that
+            // co_await of a final_suspend not be potentially throwing, and this function is called from task's
+            // final_suspend, we must treat this case as fatal. Note that once symmetric transfer is possible, it would
+            // avoid the need to run the completion here (we could return the coroutine_handle instead), avoiding
+            // running a potentially-throwing member within a final_suspend.
             possibleCompletion();
         }
     }
@@ -175,7 +181,7 @@ namespace async::details
     template <typename T>
     struct task_promise_type final
     {
-        task<T> get_return_object() noexcept
+        task<T> get_return_object()
         {
             std::shared_ptr<task_state<T>> state{ task_state<T>::create_shared() };
             m_state = std::weak_ptr{ state };
@@ -217,7 +223,7 @@ namespace async::details
     template <>
     struct task_promise_type<void> final
     {
-        task<void> get_return_object() noexcept
+        task<void> get_return_object()
         {
             std::shared_ptr<task_state<void>> state{ task_state<void>::create_shared() };
             m_state = std::weak_ptr{ state };

@@ -23,7 +23,7 @@ namespace async
         void wait() const
         {
             std::unique_lock<std::mutex> mutexLock{ m_mutex };
-            m_condition.wait(mutexLock, [this]() { return m_signaled.load(); });
+            m_condition.wait(mutexLock, [this]() noexcept { return m_signaled.load(); });
         }
 
         template <typename Rep, typename Period>
@@ -45,8 +45,12 @@ namespace async
         void set() noexcept
         {
             // std::lock_guard constructor is not technically noexcept, but the only possible exception would be from
-            // std::mutex.lock, which itself is not technically noexcept, but the underlying implementation (_Mtx_lock)
-            // appears never to return failure/throw (ultimately calls AcquireSRWLockExclusive, which never fails).
+            // std::mutex.lock, which itself is not technically noexcept, but the underlying implementation on MSVC
+            // (_Mtx_lock) appears never to return failure/throw (ultimately calls AcquireSRWLockExclusive, which never
+            // fails).
+            // Regardless, the C++20 standard requires that co_await of a final_suspend not be potentially throwing, and
+            // this member is designed to be called by a final_suspend for awaitable_get, so treat any exception from
+            // other Standard Library implementations here as fatal.
             std::lock_guard<std::mutex> mutexGuard{ m_mutex };
             m_signaled = true;
             m_condition.notify_all();
