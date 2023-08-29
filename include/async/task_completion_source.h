@@ -60,7 +60,7 @@ namespace async::details
             return true;
         }
 
-        void set_exception(std::exception_ptr exception)
+        void set_exception(const std::exception_ptr& exception)
         {
             if (!exception)
             {
@@ -73,7 +73,7 @@ namespace async::details
             }
         }
 
-        [[nodiscard]] bool try_set_exception(std::exception_ptr exception) noexcept
+        [[nodiscard]] bool try_set_exception(const std::exception_ptr& exception) noexcept
         {
             if (!exception)
             {
@@ -132,9 +132,9 @@ namespace async
 
         [[nodiscard]] bool try_set_value(T value) noexcept { return m_core.try_set_value(value); };
 
-        void set_exception(std::exception_ptr exception) { m_core.set_exception(exception); }
+        void set_exception(const std::exception_ptr& exception) { m_core.set_exception(exception); }
 
-        [[nodiscard]] bool try_set_exception(std::exception_ptr exception) noexcept
+        [[nodiscard]] bool try_set_exception(const std::exception_ptr& exception) noexcept
         {
             return m_core.try_set_exception(exception);
         }
@@ -152,9 +152,9 @@ namespace async
 
         [[nodiscard]] bool try_set_value() noexcept { return m_core.try_set_value(); };
 
-        void set_exception(std::exception_ptr exception) { m_core.set_exception(exception); }
+        void set_exception(const std::exception_ptr& exception) { m_core.set_exception(exception); }
 
-        [[nodiscard]] bool try_set_exception(std::exception_ptr exception) noexcept
+        [[nodiscard]] bool try_set_exception(const std::exception_ptr& exception) noexcept
         {
             return m_core.try_set_exception(exception);
         }
