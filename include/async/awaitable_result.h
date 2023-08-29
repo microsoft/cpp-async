@@ -99,7 +99,13 @@ namespace async
 #pragma warning(pop)
 #endif
 
+            result_union(const result_union&) = delete;
+            result_union(result_union&&) noexcept = delete;
+
             ~result_union() noexcept {}
+
+            result_union& operator=(const result_union&) = delete;
+            result_union& operator=(result_union&&) noexcept = delete;
 
             possible_reference value;
             std::exception_ptr exception;
