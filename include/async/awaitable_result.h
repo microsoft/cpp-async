@@ -76,7 +76,7 @@ namespace async
             m_storageType = result_union_type::value;
         }
 
-        void set_exception(std::exception_ptr exception) noexcept
+        void set_exception(const std::exception_ptr& exception) noexcept
         {
             new (std::addressof(m_storage.exception)) std::exception_ptr{ exception };
             m_storageType = result_union_type::exception;
@@ -122,7 +122,7 @@ namespace async
     {
         awaitable_result() noexcept : m_exception{} {}
 
-        explicit awaitable_result(std::exception_ptr exception) noexcept : m_exception{ exception } {}
+        explicit awaitable_result(const std::exception_ptr& exception) noexcept : m_exception{ exception } {}
 
         awaitable_result(const awaitable_result&) = delete;
         awaitable_result(awaitable_result&&) noexcept = default;
@@ -143,7 +143,7 @@ namespace async
 
         constexpr void set_value() const noexcept {};
 
-        void set_exception(std::exception_ptr exception) noexcept { m_exception = exception; }
+        void set_exception(const std::exception_ptr& exception) noexcept { m_exception = exception; }
 
     private:
         std::exception_ptr m_exception{};
