@@ -150,7 +150,7 @@ namespace async::details
 
         if (sharedState)
         {
-            std::coroutine_handle<> possibleCompletion{ sharedState->mark_ready() };
+            const std::coroutine_handle<> possibleCompletion{ sharedState->mark_ready() };
 
             if (possibleCompletion)
             {
@@ -164,7 +164,7 @@ namespace async::details
     template <typename T>
     void run_completion_if_exists(const std::weak_ptr<task_state<T>>& state)
     {
-        std::coroutine_handle<> possibleCompletion{ get_completion(state) };
+        const std::coroutine_handle<> possibleCompletion{ get_completion(state) };
 
         if (possibleCompletion)
         {

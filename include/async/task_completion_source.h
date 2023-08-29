@@ -108,7 +108,7 @@ namespace async::details
         {
             assert(m_completionState.load() == task_completion_state::set);
 
-            std::coroutine_handle<> possibleCompletion{ m_taskState->mark_ready() };
+            const std::coroutine_handle<> possibleCompletion{ m_taskState->mark_ready() };
 
             if (possibleCompletion)
             {
