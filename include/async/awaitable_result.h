@@ -90,8 +90,15 @@ namespace async
 
         union result_union
         {
-#pragma prefast(suppress : 26495, "Do not default-initialize in a union.")
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 26495, "Do not default-initialize in a union.")
+#endif
             constexpr result_union() noexcept {}
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
             ~result_union() noexcept {}
 
             possible_reference value;
