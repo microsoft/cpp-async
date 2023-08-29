@@ -1028,18 +1028,18 @@ TEST_CASE("task_completion_source<T!has_default_ctor>.set_value() makes its task
 
 namespace
 {
-    struct move_only_signal_and_black_on_move final
+    struct move_only_signal_and_block_on_move final
     {
-        explicit move_only_signal_and_black_on_move(
+        explicit move_only_signal_and_block_on_move(
             async::event_signal& moving, async::event_signal& resume, async::event_signal& done) :
             m_moving{ moving },
             m_resume{ resume }, m_done{ done }
         {
         }
 
-        move_only_signal_and_black_on_move(const move_only_signal_and_black_on_move&) = delete;
+        move_only_signal_and_block_on_move(const move_only_signal_and_block_on_move&) = delete;
 
-        move_only_signal_and_black_on_move(move_only_signal_and_black_on_move&& other) noexcept :
+        move_only_signal_and_block_on_move(move_only_signal_and_block_on_move&& other) noexcept :
             m_moving{ other.m_moving }, m_resume{ other.m_resume }, m_done{ other.m_done }
         {
             m_moving.set();
@@ -1047,11 +1047,11 @@ namespace
             m_done.set();
         }
 
-        ~move_only_signal_and_black_on_move() noexcept = default;
+        ~move_only_signal_and_block_on_move() noexcept = default;
 
-        move_only_signal_and_black_on_move& operator=(const move_only_signal_and_black_on_move&) = delete;
+        move_only_signal_and_block_on_move& operator=(const move_only_signal_and_block_on_move&) = delete;
 
-        move_only_signal_and_black_on_move& operator=(move_only_signal_and_black_on_move&& other) noexcept = delete;
+        move_only_signal_and_block_on_move& operator=(move_only_signal_and_block_on_move&& other) noexcept = delete;
 
     private:
         async::event_signal& m_moving;
@@ -1063,13 +1063,13 @@ namespace
 TEST_CASE("task_completion_source<T>.try_set_value() returns false when another thread is partway through setting.")
 {
     // Arrange
-    async::task_completion_source<move_only_signal_and_black_on_move> promise{};
-    async::task<move_only_signal_and_black_on_move> task{ promise.task() };
+    async::task_completion_source<move_only_signal_and_block_on_move> promise{};
+    async::task<move_only_signal_and_block_on_move> task{ promise.task() };
     async::event_signal startedMove{};
     async::event_signal resumeMove{};
     async::event_signal moveDone{};
     simplejthread setValueThread{ [&promise, &startedMove, &resumeMove, &moveDone]() {
-        promise.set_value(move_only_signal_and_black_on_move{ startedMove, resumeMove, moveDone });
+        promise.set_value(move_only_signal_and_block_on_move{ startedMove, resumeMove, moveDone });
     } };
 
     async::event_signal ignore1{};
@@ -1079,7 +1079,7 @@ TEST_CASE("task_completion_source<T>.try_set_value() returns false when another 
     startedMove.wait_for_or_throw(std::chrono::seconds{ 1 });
 
     // Act
-    bool result{ promise.try_set_value(move_only_signal_and_black_on_move{ ignore1, doNotBlock, ignore2 }) };
+    bool result{ promise.try_set_value(move_only_signal_and_block_on_move{ ignore1, doNotBlock, ignore2 }) };
 
     // Assert
     resumeMove.set();
