@@ -3,8 +3,10 @@
 #pragma once
 
 #include <cassert>
+#include <cstring>
 #include <exception>
 #include <stdexcept>
+#include <tuple>
 
 namespace async
 {
@@ -90,14 +92,7 @@ namespace async
 
         union result_union
         {
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 26495) // Do not default-initialize in a union.
-#endif
-            constexpr result_union() noexcept {}
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
+            constexpr result_union() noexcept { std::ignore = std::memset(this, 0, sizeof(*this)); }
 
             result_union(const result_union&) = delete;
             result_union(result_union&&) noexcept = delete;
