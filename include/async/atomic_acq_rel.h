@@ -12,7 +12,7 @@ namespace async::details
     template <typename T>
     struct atomic_acq_rel final
     {
-        atomic_acq_rel() noexcept = default;
+        constexpr atomic_acq_rel() noexcept = default;
 
         constexpr atomic_acq_rel(T desired) noexcept : m_value{ std::forward<T>(desired) } {}
 
