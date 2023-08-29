@@ -92,7 +92,7 @@ namespace async
         {
 #ifdef _MSC_VER
 #pragma warning(push)
-#pragma warning(disable : 26495, "Do not default-initialize in a union.")
+#pragma warning(disable : 26495) // Do not default-initialize in a union.
 #endif
             constexpr result_union() noexcept {}
 #ifdef _MSC_VER
