@@ -9,7 +9,7 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 
 ; imperative languages use a different indent_size
-[*.{cpp,def,h,idl}]
+[*.{cpp,h}]
 indent_size = 4
 
 ; don't fight VS
@@ -32,12 +32,3 @@ insert_final_newline = false
 ; don't fight Git
 [.gitmodules]
 indent_style = tab
-
-; don't fight NuGet tooling
-[packages.config]
-charset = utf-8-bom
-insert_final_newline = false
-
-; don't fight NuGet tooling
-[packages.lock.json]
-insert_final_newline = false
