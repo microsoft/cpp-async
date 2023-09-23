@@ -233,7 +233,7 @@ async::task<int> simulate_send_recv_async(int data, std::stop_token stopToken)
 
 # task_completion_source<T>
 
-This type controls a task and allows it to be returned and completed separately. Is is designed for producing an
+This type controls a task and allows it to be returned and completed separately. It is designed for producing an
 awaitable type from a function that is not itself a coroutine.
 
 The design of this type is intentionally similar to TaskCompletionSource<TResult> in .NET.
@@ -295,7 +295,7 @@ int main()
 
 # Cancellation
 
-A task can support cancellation requests using std::stop_token. Mulitple options exist for communicating that a task has
+A task can support cancellation requests using std::stop_token. Multiple options exist for communicating that a task has
 been canceled, including returning a sentinel value, using std::expected and std::unexpected, or throwing an exception.
 
 The following example code provides a harness for running a coroutine that cancels on SIGINT:
