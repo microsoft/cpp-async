@@ -210,7 +210,7 @@ int main()
 For implementations that wish to treat cancellation as exceptional, this exception type can be thrown to indicate that
 a task responded to a cancellation request rather than completing successfully.
 
-Alternatives to exceptions include returning a sentinel value or using std::excepted (C++23). For details, see
+Alternatives to exceptions include returning a sentinel value or using std::expected (C++23). For details, see
 the Cancellation section below.
 
 Example usage:
