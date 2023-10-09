@@ -244,11 +244,9 @@ async::task<int> compute_async(std::thread& callbackThread)
 {
     std::shared_ptr<async::task_completion_source<int>> promise{
         std::make_shared<async::task_completion_source<int>>() };
-    // Warning: without the sleep below, the may run and be destroyed before it is assigned to callbackThread.
     // Capture the task_completion_source shared_ptr by value, or it will get destructed before the callbackThread runs.
     callbackThread = std::thread{ [promise]()
         {
-            std::this_thread::sleep_for(std::chrono::seconds{ 1 });
             promise->set_value(123);
         }
     };
