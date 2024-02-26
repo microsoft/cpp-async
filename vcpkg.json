@@ -4,5 +4,12 @@
   "version-string": "1",
   "dependencies": [
     "catch2"
+  ],
+  "builtin-baseline": "b7dba7f9aad09a56900f21cd78cfda1258e54e38",
+  "overrides": [
+    {
+      "name": "catch2",
+      "version": "2.13.9#1"
+    }
   ]
 }
