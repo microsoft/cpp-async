@@ -25,12 +25,13 @@ namespace async::details
     {
         static to_future_task create(Awaitable awaitable, std::future<T>& future)
         {
+            Awaitable capturedAwaitable{ std::move(awaitable) };
             std::promise<T> promise{};
             future = promise.get_future();
 
             try
             {
-                promise.set_value(co_await std::move(awaitable));
+                promise.set_value(co_await std::move(capturedAwaitable));
             }
             catch (...)
             {
@@ -46,6 +47,7 @@ namespace async::details
     {
         static to_future_task create(Awaitable awaitable, std::future<void>& future)
         {
+            Awaitable capturedAwaitable{ std::move(awaitable) };
             std::promise<void> promise{};
             future = promise.get_future();
 
@@ -53,7 +55,7 @@ namespace async::details
 
             try
             {
-                co_await awaitable;
+                co_await std::move(capturedAwaitable);
             }
             catch (...)
             {
