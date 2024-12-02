@@ -36,9 +36,11 @@ namespace
 {
     async::task<void> co_await_void_finally_set_signal(async::task<void>&& awaitable, async::event_signal& done)
     {
+        async::task<void> capturedAwaitable{ std::move(awaitable) };
+
         try
         {
-            co_await std::move(awaitable);
+            co_await std::move(capturedAwaitable);
         }
         catch (...)
         {
@@ -206,9 +208,11 @@ namespace
     co_await_void_propagates_unhandled_exception_task co_await_void_propagates_unhandled_exception(
         async::task<void>&& awaitable, std::exception_ptr exception)
     {
+        async::task<void> capturedAwaitable{ std::move(awaitable) };
+
         try
         {
-            co_await std::move(awaitable);
+            co_await std::move(capturedAwaitable);
         }
         catch (...)
         {
@@ -729,9 +733,11 @@ namespace
     template <typename T>
     async::task<void> co_await_value_finally_set_signal(async::task<T>&& awaitable, async::event_signal& done)
     {
+        async::task<T> capturedAwaitable{ std::move(awaitable) };
+
         try
         {
-            (void)(co_await std::move(awaitable));
+            (void)(co_await std::move(capturedAwaitable));
         }
         catch (...)
         {
@@ -908,11 +914,12 @@ namespace
     co_await_value_propagates_unhandled_exception_task co_await_value_propagates_unhandled_exception(
         async::task<int>&& awaitable, std::exception_ptr exception)
     {
+        async::task<int> capturedAwaitable{ std::move(awaitable) };
         int ignore{};
 
         try
         {
-            ignore = co_await std::move(awaitable);
+            ignore = co_await std::move(capturedAwaitable);
         }
         catch (...)
         {

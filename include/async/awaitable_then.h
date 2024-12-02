@@ -26,11 +26,12 @@ namespace async::details
     {
         static then_task create(Awaitable awaitable, Continuation continuation)
         {
+            Awaitable capturedAwaitable{ std::move(awaitable) };
             awaitable_result<T> result{};
 
             try
             {
-                result.set_value(co_await std::move(awaitable));
+                result.set_value(co_await std::move(capturedAwaitable));
             }
             catch (...)
             {
@@ -47,11 +48,12 @@ namespace async::details
     {
         static then_task create(Awaitable awaitable, Continuation continuation)
         {
+            Awaitable capturedAwaitable{ std::move(awaitable) };
             std::exception_ptr exception{};
 
             try
             {
-                co_await std::move(awaitable);
+                co_await std::move(capturedAwaitable);
             }
             catch (...)
             {

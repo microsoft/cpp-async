@@ -124,7 +124,11 @@ namespace async
 
         struct factory final
         {
-            static details::get_task<T> create(Awaitable awaitable) { co_return co_await std::move(awaitable); }
+            static details::get_task<T> create(Awaitable awaitable)
+            {
+                Awaitable capturedAwaitable{ std::move(awaitable) };
+                co_return co_await std::move(capturedAwaitable);
+            }
         };
 
         return factory::create(std::move(awaitable)).get();
