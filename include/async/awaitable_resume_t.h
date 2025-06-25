@@ -13,7 +13,7 @@ namespace async::details
         using type = T;
     };
 
-#if defined(__cpp_concepts) && __cpp_concepts >= 202002L
+#if defined(__cpp_concepts) && !defined(_WIN32)
 
     template <typename T>
         requires(requires(T t) { t.operator co_await(); })
