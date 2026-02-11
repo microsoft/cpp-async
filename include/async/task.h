@@ -154,8 +154,9 @@ namespace async::details
 
         std::coroutine_handle<> await_suspend(std::coroutine_handle<> handle) const noexcept
         {
+            std::coroutine_handle<> temp = m_continuation;
             handle.destroy();
-            return m_continuation;
+            return temp;
         }
 
         constexpr void await_resume() const noexcept {}
